@@ -10,9 +10,9 @@ public class ElectricityClueSystem : MonoBehaviour
     [Header("Cable Components")]
     [SerializeField] private Transform cableEnd;
     [SerializeField] private Transform connectionPoint;
-    [SerializeField] private float connectionDistance = 0.1f; // How close cable needs to be to connection
-    [SerializeField] private float connectionSpeed = 2f;
-    
+    [SerializeField] private Animator cableAnimator;
+    [SerializeField] private string connectAnimationTrigger = "Connect";
+        
     [Header("Server Rack Components")]
     [SerializeField] private Light[] serverLights;
     [SerializeField] private float lightIntensity = 2f;
@@ -27,7 +27,8 @@ public class ElectricityClueSystem : MonoBehaviour
     [SerializeField] private GameObject clueTextObject;
     [SerializeField] private Material emissiveMaterial;
     [SerializeField] private ClueProgressUI clueProgressUI;
-    
+
+
     // References for interaction
     private PlayerInteractionManager interactionManager;
     private MeshRenderer clueTextRenderer;
@@ -55,28 +56,34 @@ public class ElectricityClueSystem : MonoBehaviour
         if (!cableConnected)
         {
             Debug.Log("Connecting cable");
-            StartCoroutine(ConnectCable());
+            // Trigger the animation
+            if (cableAnimator != null)
+            {
+                cableAnimator.SetTrigger(connectAnimationTrigger);
+                // Wait for animation to finish before powering on
+                StartCoroutine(WaitForAnimationAndPowerOn());
+            }
+            else
+            {
+                // Fallback if animator is missing
+                cableConnected = true;
+                PowerOn();
+            }
         }
     }
-    
-    private IEnumerator ConnectCable()
+
+    private IEnumerator WaitForAnimationAndPowerOn() 
     {
         // Temporarily disable player interaction during animation
         if (interactionManager != null) interactionManager.SetInteractionEnabled(false);
         
-        float time = 0;
-        Vector3 startPosition = cableEnd.position;
-        Quaternion startRotation = cableEnd.rotation;
+        // Wait for animation to finish
+        AnimatorStateInfo info = cableAnimator.GetCurrentAnimatorStateInfo(0);
+        yield return new WaitForSeconds(info.length + 0.1f); // Add a small buffer
         
-        // Animate the cable connecting to the connection point
-        while (time < 1)
-        {
-            time += Time.deltaTime * connectionSpeed;
-            cableEnd.position = Vector3.Lerp(startPosition, connectionPoint.position, time);
-            cableEnd.rotation = Quaternion.Slerp(startRotation, connectionPoint.rotation, time);
-            yield return null;
-        }
-        
+        // Disable animator to prevent further changes
+        cableAnimator.enabled = false;
+                
         // Re-enable player interaction
         if (interactionManager != null) interactionManager.SetInteractionEnabled(true);
         
@@ -86,7 +93,7 @@ public class ElectricityClueSystem : MonoBehaviour
         // Power on
         PowerOn();
     }
-    
+
     private void PowerOn()
     {
         // Turn on lights with a brief delay between them for effect
@@ -185,10 +192,14 @@ public class ElectricityClueSystem : MonoBehaviour
         {
             clueTextObject.SetActive(true);
             
-            // Apply emissive material if available
-            if (clueTextRenderer != null && emissiveMaterial != null)
+            // Get the text renderer
+            TMPro.TextMeshPro textMesh = clueTextObject.GetComponent<TMPro.TextMeshPro>();
+            if (textMesh != null)
             {
-                clueTextRenderer.material = emissiveMaterial;
+                // Get the current material and modify its emission
+                Material textMaterial = textMesh.fontMaterial;
+                textMaterial.EnableKeyword("_EMISSION");
+                textMaterial.SetColor("_EmissionColor", Color.cyan * 2.0f); // Adjust color and intensity
             }
         }
         

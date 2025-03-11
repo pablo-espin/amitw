@@ -63,6 +63,30 @@ public class PlayerInteractionManager : MonoBehaviour
                 return;
             }
             
+            // Check for electricity interactables
+            ElectricityInteractable electricityObject = hit.collider.GetComponent<ElectricityInteractable>();
+            if (electricityObject != null)
+            {
+                ShowInteractionPrompt(electricityObject.GetInteractionPrompt());
+                return;
+            }
+            
+            // Check for location interactables
+            LocationInteractable locationObject = hit.collider.GetComponent<LocationInteractable>();
+            if (locationObject != null)
+            {
+                ShowInteractionPrompt(locationObject.GetInteractionPrompt());
+                return;
+            }
+            
+            // Check for false clue interactable
+            FalseClueInteractable falseClueObject = hit.collider.GetComponent<FalseClueInteractable>();
+            if (falseClueObject != null)
+            {
+                ShowInteractionPrompt(falseClueObject.GetInteractionPrompt());
+                return;
+            }
+            
             // If no valid interactable found, hide prompt
             HideInteractionPrompt();
         }
@@ -93,6 +117,30 @@ public class PlayerInteractionManager : MonoBehaviour
             if (waterObject != null)
             {
                 waterObject.Interact();
+                return;
+            }
+            
+            // Check for electricity interactables
+            ElectricityInteractable electricityObject = hit.collider.GetComponent<ElectricityInteractable>();
+            if (electricityObject != null)
+            {
+                electricityObject.Interact();
+                return;
+            }
+            
+            // Check for location interactables
+            LocationInteractable locationObject = hit.collider.GetComponent<LocationInteractable>();
+            if (locationObject != null)
+            {
+                locationObject.Interact();
+                return;
+            }
+            
+            // Check for false clue interactable
+            FalseClueInteractable falseClueObject = hit.collider.GetComponent<FalseClueInteractable>();
+            if (falseClueObject != null)
+            {
+                falseClueObject.Interact();
                 return;
             }
         }

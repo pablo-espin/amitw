@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class GameHUDManager : MonoBehaviour
 {
@@ -21,16 +22,37 @@ public class GameHUDManager : MonoBehaviour
     [SerializeField] private float errorDisplayTime = 2f;
     [SerializeField] private Color errorColor = Color.red;
 
-    [Header("Outcome Messages")]
+    [Header("Outcome Panel")]
     [SerializeField] private GameObject outcomePanel;
-    [SerializeField] private TextMeshProUGUI outcomeText;
+    [SerializeField] private TextMeshProUGUI outcomeTitle;
+    [SerializeField] private TextMeshProUGUI outcomeDescription;
+    [SerializeField] private TextMeshProUGUI statsText;
     [SerializeField] private Button learnMoreButton;
+    [SerializeField] private Button playAgainButton;
+    [SerializeField] private string learnMoreURL = "https://example.com/datacenters";
+    
+    [Header("Outcome Messages")]
+    [SerializeField] private string successTitle = "MEMORY DECRYPTED";
+    [SerializeField] private string successDescription = "You have successfully recovered the memory from the data center.";
+    [SerializeField] private string corruptionTitle = "MEMORY CORRUPTED";
+    [SerializeField] private string corruptionDescription = "The memory has been corrupted due to invalid decryption codes.";
+    [SerializeField] private string timeoutTitle = "MEMORY DELETED";
+    [SerializeField] private string timeoutDescription = "The memory has been permanently deleted due to security timeout.";
 
     [Header("Clue System")]
     [SerializeField] private ClueProgressUI clueProgressUI;
-    [SerializeField] private bool requireAllCluesForDecryption = true;
     
-    private PlayerInteractionManager playerInteraction;
+    [Header("Stats Tracking")]
+    private float energyUsed = 0f; // in kWh
+    private float computeTimeUsed = 0f; // in minutes
+    private int stepsTaken = 0;
+    private Vector3 lastPosition;
+    private float distanceTraveled = 0f; // in meters
+    
+    // References for interaction
+    private PlayerInteractionManager interactionManager;
+    private MemorySphere currentMemorySphere;
+    private Transform playerTransform;
 
     private void Start()
     {
@@ -39,19 +61,31 @@ public class GameHUDManager : MonoBehaviour
         UpdateTimerDisplay();
 
         // Hide panels initially
-        decryptionPanel.SetActive(false);
-        outcomePanel.SetActive(false);
+        if (decryptionPanel != null) decryptionPanel.SetActive(false);
+        if (outcomePanel != null) outcomePanel.SetActive(false);
         if (errorText != null) errorText.gameObject.SetActive(false);
 
         // Add listeners
-        submitButton.onClick.AddListener(CheckDecryption);
-        closeButton.onClick.AddListener(CloseDecryptionPanel);
-        learnMoreButton.onClick.AddListener(OnLearnMoreClicked);
+        if (submitButton != null) submitButton.onClick.AddListener(CheckDecryption);
+        if (closeButton != null) closeButton.onClick.AddListener(CloseDecryptionPanel);
+        if (learnMoreButton != null) learnMoreButton.onClick.AddListener(OnLearnMoreClicked);
+        if (playAgainButton != null) playAgainButton.onClick.AddListener(OnPlayAgainClicked);
 
         // Set encrypted text
-        encryptedText.text = GenerateGarbledText();
+        if (encryptedText != null) encryptedText.text = GenerateGarbledText();
 
-        playerInteraction = FindObjectOfType<PlayerInteractionManager>();
+        // Find references
+        interactionManager = FindObjectOfType<PlayerInteractionManager>();
+        
+        // Find the player for stats tracking
+        playerTransform = Camera.main.transform;
+        if (playerTransform != null)
+        {
+            lastPosition = playerTransform.position;
+        }
+        
+        // Start stats tracking
+        InvokeRepeating("UpdateStats", 1f, 1f);
     }
 
     private void Update()
@@ -72,80 +106,99 @@ public class GameHUDManager : MonoBehaviour
     {
         int minutes = Mathf.FloorToInt(currentTime / 60);
         int seconds = Mathf.FloorToInt(currentTime % 60);
-        timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
-
-        if (currentTime <= 60) // Last minute
+        
+        if (timerText != null)
         {
-            timerText.color = Color.red;
+            timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+
+            if (currentTime <= 60) // Last minute
+            {
+                timerText.color = Color.red;
+            }
         }
     }
 
     public void ShowDecryptionPanel()
     {
-        decryptionPanel.SetActive(true);
-        decryptionInput.text = "";
+        if (decryptionPanel != null)
+        {
+            decryptionPanel.SetActive(true);
+            
+            if (decryptionInput != null)
+            {
+                decryptionInput.text = "";
+                decryptionInput.ActivateInputField();
+            }
+        }
         
-        // Ensure cursor is visible and unlocked
+        // Ensure cursor is visible and unlocked when panel is open
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+        
+        // Disable player movement
+        if (interactionManager != null)
+        {
+            interactionManager.SetInteractionEnabled(false);
+        }
     }
 
     public void CloseDecryptionPanel()
     {
-        decryptionPanel.SetActive(false);
+        if (decryptionPanel != null)
+        {
+            decryptionPanel.SetActive(false);
+        }
+        
+        // Restore cursor state
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        
+        // Re-enable player movement
+        if (interactionManager != null)
+        {
+            interactionManager.SetInteractionEnabled(true);
+        }
     }
 
     private void CheckDecryption()
     {
-        // Check if player has found clues
-        if (requireAllCluesForDecryption && !clueProgressUI.AreAllCluesSolved())
+        if (decryptionInput == null || string.IsNullOrEmpty(decryptionInput.text))
+            return;
+                
+        string input = decryptionInput.text.Trim();
+        
+        // Get all clue codes
+        string[] clueCodes = clueProgressUI.GetClueCodes();
+        string waterClueCode = clueCodes[0];
+        string electricityClueCode = clueCodes[1];
+        string locationClueCode = clueCodes[2];
+        string falseClueCode = clueCodes[3]; // Index 3 contains the false clue
+
+        // Case 1: Check if false clue was used
+        if (!string.IsNullOrEmpty(falseClueCode) && input.Contains(falseClueCode))
         {
-            // If all clues required but not found
-            StartCoroutine(ShowWrongCodeFeedback("Missing clues. Find all clues first."));
+            ShowCorruptionOutcome();
             return;
         }
-        
-        string[] clueCodes = clueProgressUI.GetClueCodes();
-        string inputCode = decryptionInput.text;
-        
-        // Option 1: Success - all legitimate clues used
-        if (IsCorrectDecryptionCode(inputCode, clueCodes))
+
+        // Case 2: Check if all legitimate clues were used correctly
+        bool allCodesFound = !string.IsNullOrEmpty(waterClueCode) && 
+                            !string.IsNullOrEmpty(electricityClueCode) && 
+                            !string.IsNullOrEmpty(locationClueCode);
+                            
+        bool allCodesUsed = input.Contains(waterClueCode) && 
+                            input.Contains(electricityClueCode) && 
+                            input.Contains(locationClueCode);
+
+        if (allCodesFound && allCodesUsed)
         {
-            ShowOutcome("Success! Memory decrypted");
-            playerInteraction.DecryptCurrentSphere();
+            ShowSuccessOutcome();
         }
-        // Option 2: Corruption - false clue used
-        else if (ContainsFalseClue(inputCode, clueCodes[3]))
-        {
-            ShowOutcome("Decryption failed. Memory corrupted");
-            playerInteraction.CorruptCurrentSphere(); // You'll need to add this method
-        }
-        // Option 3: Wrong code entered
         else
         {
-            StartCoroutine(ShowWrongCodeFeedback("Invalid code. Please Try again"));
+            // Wrong code entered
+            StartCoroutine(ShowWrongCodeFeedback("Invalid code. Try again."));
         }
-    }
-    
-    private bool IsCorrectDecryptionCode(string inputCode, string[] clueCodes)
-    {
-        // This method would check if the input code correctly combines the three legitimate clues
-        // For now, a simple implementation - modify based on your specific requirements
-        string correctCombination = CombineLegitimateClueCodes(clueCodes);
-        return inputCode == correctCombination;
-    }
-    
-    private string CombineLegitimateClueCodes(string[] clueCodes)
-    {
-        // Method to combine the three legitimate clue codes (first three in the array)
-        // This is a simplified example - customize as needed
-        return clueCodes[0] + clueCodes[1] + clueCodes[2];
-    }
-    
-    private bool ContainsFalseClue(string inputCode, string falseClue)
-    {
-        // Check if the input contains the false clue
-        return !string.IsNullOrEmpty(falseClue) && inputCode.Contains(falseClue);
     }
 
     private IEnumerator ShowWrongCodeFeedback(string message)
@@ -155,8 +208,11 @@ public class GameHUDManager : MonoBehaviour
         Color originalInputColor = decryptionInput.image.color;
         
         // Show error message
-        errorText.gameObject.SetActive(true);
-        errorText.text = message;
+        if (errorText != null)
+        {
+            errorText.gameObject.SetActive(true);
+            errorText.text = message;
+        }
         
         // Shake effect
         float elapsed = 0f;
@@ -184,32 +240,159 @@ public class GameHUDManager : MonoBehaviour
         
         // Hide error message after delay
         yield return new WaitForSeconds(errorDisplayTime);
-        errorText.gameObject.SetActive(false);
+        if (errorText != null)
+        {
+            errorText.gameObject.SetActive(false);
+        }
     }
 
     private void TimeUp()
     {
         isTimerRunning = false;
-        ShowOutcome("Memory permanently deleted. Time expired.");
+        ShowTimeoutOutcome();
     }
 
-    private void ShowOutcome(string message)
+    private void ShowSuccessOutcome()
     {
         isTimerRunning = false;
-        decryptionPanel.SetActive(false);
-        outcomePanel.SetActive(true);
-        outcomeText.text = message;
+        
+        // Hide decryption panel
+        if (decryptionPanel != null)
+        {
+            decryptionPanel.SetActive(false);
+        }
+        
+        // Decrypt memory sphere
+        if (interactionManager != null)
+        {
+            interactionManager.DecryptCurrentSphere();
+        }
+        
+        // Show outcome panel
+        ShowOutcomePanel(successTitle, successDescription, GenerateStats());
+    }
+    
+    private void ShowCorruptionOutcome()
+    {
+        isTimerRunning = false;
+        
+        // Hide decryption panel
+        if (decryptionPanel != null)
+        {
+            decryptionPanel.SetActive(false);
+        }
+        
+        // Corrupt memory sphere
+        if (interactionManager != null)
+        {
+            interactionManager.CorruptCurrentSphere();
+        }
+        
+        // Show outcome panel
+        ShowOutcomePanel(corruptionTitle, corruptionDescription, GenerateStats());
+    }
+    
+    private void ShowTimeoutOutcome()
+    {
+        isTimerRunning = false;
+        
+        // Hide any open panels
+        if (decryptionPanel != null)
+        {
+            decryptionPanel.SetActive(false);
+        }
+        
+        // Show outcome panel
+        ShowOutcomePanel(timeoutTitle, timeoutDescription, GenerateStats());
+    }
+    
+    private void ShowOutcomePanel(string title, string description, string stats)
+    {
+        if (outcomePanel != null)
+        {
+            outcomePanel.SetActive(true);
+            
+            if (outcomeTitle != null)
+            {
+                outcomeTitle.text = title;
+            }
+            
+            if (outcomeDescription != null)
+            {
+                outcomeDescription.text = description;
+            }
+            
+            if (statsText != null)
+            {
+                statsText.text = stats;
+            }
+        }
+        
+        // Unlock cursor for UI interaction
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
+        // Disable player movement
+        if (interactionManager != null)
+        {
+            interactionManager.SetInteractionEnabled(false);
+        }
     }
 
     private void OnLearnMoreClicked()
     {
-        Application.OpenURL("YOUR_URL_HERE");
+        Application.OpenURL(learnMoreURL);
+    }
+    
+    private void OnPlayAgainClicked()
+    {
+        // Reload the current scene
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    private void UpdateStats()
+    {
+        // Update compute time (1 second = 1 computation unit)
+        computeTimeUsed += 1f / 60f; // Convert to minutes
+        
+        // Update energy usage (estimated based on time and movement)
+        energyUsed += 0.01f; // Base energy use
+        
+        // Update steps/distance
+        if (playerTransform != null)
+        {
+            Vector3 currentPosition = playerTransform.position;
+            float distance = Vector3.Distance(lastPosition, currentPosition);
+            
+            if (distance > 0.5f) // Minimum threshold to count as movement
+            {
+                distanceTraveled += distance;
+                stepsTaken++;
+            }
+            
+            lastPosition = currentPosition;
+        }
+    }
+    
+    private string GenerateStats()
+    {
+        string timeUsed = ((maxTime - currentTime) / 60f).ToString("F1");
+        string energyStr = energyUsed.ToString("F2");
+        string computeStr = computeTimeUsed.ToString("F1");
+        string stepsStr = stepsTaken.ToString();
+        string distanceStr = distanceTraveled.ToString("F1");
+        
+        return $"TIME SPENT: {timeUsed} minutes\n" +
+               $"ENERGY CONSUMED: {energyStr} kWh\n" +
+               $"COMPUTE TIME: {computeStr} minutes\n" +
+               $"STEPS TAKEN: {stepsStr}\n" +
+               $"DISTANCE TRAVELED: {distanceStr} meters";
     }
 
     private string GenerateGarbledText()
     {
         // Generate random characters to represent encrypted text
-        string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*ã¥Ñƒœ£^&*Žl□|ñ³ÐÖ%$‰¾½¼‡¶™Ë[úã€";
+        string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*";
         System.Text.StringBuilder result = new System.Text.StringBuilder();
         System.Random random = new System.Random();
 
