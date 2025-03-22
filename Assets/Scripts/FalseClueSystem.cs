@@ -34,9 +34,13 @@ public class FalseClueSystem : MonoBehaviour
 
     // References for interaction
     private PlayerInteractionManager interactionManager;
+    private UIInputController uiInputController;
 
     void Start()
     {
+        // Get references
+        uiInputController = FindObjectOfType<UIInputController>();
+
         // Find the interaction manager
         interactionManager = FindObjectOfType<PlayerInteractionManager>();
         
@@ -103,6 +107,12 @@ public class FalseClueSystem : MonoBehaviour
             Cursor.visible = true;
 
         }
+
+        // Disable player input
+        if (uiInputController != null)
+        {
+            uiInputController.DisableGameplayInput();
+        }
     }
     
     public void CloseComputer()
@@ -118,6 +128,12 @@ public class FalseClueSystem : MonoBehaviour
         // Re-lock the cursor for gameplay
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        // Enable player input
+        if (uiInputController != null)
+        {
+            uiInputController.EnableGameplayInput();
+        }
     }
     
     private void SwitchTab(bool showCaptcha)

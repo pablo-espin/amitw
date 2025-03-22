@@ -53,6 +53,7 @@ public class GameHUDManager : MonoBehaviour
     private PlayerInteractionManager interactionManager;
     private MemorySphere currentMemorySphere;
     private Transform playerTransform;
+    private UIInputController uiInputController;
 
     private void Start()
     {
@@ -76,6 +77,7 @@ public class GameHUDManager : MonoBehaviour
 
         // Find references
         interactionManager = FindObjectOfType<PlayerInteractionManager>();
+        uiInputController = FindObjectOfType<UIInputController>();
         
         // Find the player for stats tracking
         playerTransform = Camera.main.transform;
@@ -131,7 +133,6 @@ public class GameHUDManager : MonoBehaviour
             }
         }
 
-
         // Ensure cursor is visible and unlocked when panel is open
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -141,6 +142,13 @@ public class GameHUDManager : MonoBehaviour
         {
             interactionManager.SetInteractionEnabled(false);
         }
+
+        // Disable player input
+        if (uiInputController != null)
+        {
+            uiInputController.DisableGameplayInput();
+        }
+
     }
 
     public void CloseDecryptionPanel()
@@ -159,6 +167,12 @@ public class GameHUDManager : MonoBehaviour
         {
             interactionManager.SetInteractionEnabled(true);
         }
+
+        // Enable player input
+        if (uiInputController != null)
+        {
+            uiInputController.EnableGameplayInput();
+        }        
     }
 
     private void CheckDecryption()

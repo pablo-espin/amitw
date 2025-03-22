@@ -32,9 +32,13 @@ public class LocationClueSystem : MonoBehaviour
     
     // References for interaction
     private PlayerInteractionManager interactionManager;
+    private UIInputController uiInputController;
     
     void Start()
     {
+        // Get references
+        uiInputController = FindObjectOfType<UIInputController>();
+
         // Find the interaction manager
         interactionManager = FindObjectOfType<PlayerInteractionManager>();
         
@@ -73,6 +77,11 @@ public class LocationClueSystem : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             
+            if (uiInputController != null)
+            {
+                uiInputController.DisableGameplayInput();
+            }
+
             // Check if both documents have been examined
             CheckClueReveal();
         }
@@ -100,7 +109,13 @@ public class LocationClueSystem : MonoBehaviour
             // Unlock cursor for UI interaction
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            
+
+            // Disable player input
+            if (uiInputController != null)
+            {
+                uiInputController.DisableGameplayInput();
+            }
+
             // Check if both documents have been examined
             CheckClueReveal();
         }
@@ -123,6 +138,12 @@ public class LocationClueSystem : MonoBehaviour
         // Re-lock cursor for gameplay
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        // Enable player input
+        if (uiInputController != null)
+        {
+            uiInputController.EnableGameplayInput();
+        }
     }
     
     private void CheckClueReveal()
