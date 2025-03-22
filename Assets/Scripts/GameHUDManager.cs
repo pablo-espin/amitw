@@ -53,7 +53,6 @@ public class GameHUDManager : MonoBehaviour
     private PlayerInteractionManager interactionManager;
     private MemorySphere currentMemorySphere;
     private Transform playerTransform;
-    private InputManager inputManager;
 
     private void Start()
     {
@@ -77,7 +76,6 @@ public class GameHUDManager : MonoBehaviour
 
         // Find references
         interactionManager = FindObjectOfType<PlayerInteractionManager>();
-        inputManager = InputManager.Instance;
         
         // Find the player for stats tracking
         playerTransform = Camera.main.transform;
@@ -132,20 +130,13 @@ public class GameHUDManager : MonoBehaviour
                 decryptionInput.ActivateInputField();
             }
         }
+
+
+        // Ensure cursor is visible and unlocked when panel is open
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         
-        // Disable player movement and camera rotation
-        if (inputManager != null)
-        {
-            inputManager.SetUIMode(true);
-        }
-        else
-        {
-            // Fallback if InputManager is not available
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
-        
-        // Disable player interaction
+        // Disable player movement
         if (interactionManager != null)
         {
             interactionManager.SetInteractionEnabled(false);
@@ -158,20 +149,12 @@ public class GameHUDManager : MonoBehaviour
         {
             decryptionPanel.SetActive(false);
         }
+
+        // Restore cursor state
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
         
-        // Re-enable player movement and camera rotation
-        if (inputManager != null)
-        {
-            inputManager.SetUIMode(false);
-        }
-        else
-        {
-            // Fallback if InputManager is not available
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
-        
-        // Re-enable player interaction
+        // Re-enable player movement
         if (interactionManager != null)
         {
             interactionManager.SetInteractionEnabled(true);
@@ -345,20 +328,12 @@ public class GameHUDManager : MonoBehaviour
                 statsText.text = stats;
             }
         }
+
+        // Unlock cursor for UI interaction
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         
-        // Disable player movement and camera rotation
-        if (inputManager != null)
-        {
-            inputManager.SetUIMode(true);
-        }
-        else
-        {
-            // Fallback if InputManager is not available
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
-        
-        // Disable player interaction
+        // Disable player movement
         if (interactionManager != null)
         {
             interactionManager.SetInteractionEnabled(false);

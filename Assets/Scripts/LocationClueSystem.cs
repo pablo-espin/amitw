@@ -32,15 +32,11 @@ public class LocationClueSystem : MonoBehaviour
     
     // References for interaction
     private PlayerInteractionManager interactionManager;
-    private InputManager inputManager;
     
     void Start()
     {
         // Find the interaction manager
         interactionManager = FindObjectOfType<PlayerInteractionManager>();
-        
-        // Find the input manager
-        inputManager = InputManager.Instance;
         
         // Set up UI
         if (closeButton != null)
@@ -67,23 +63,15 @@ public class LocationClueSystem : MonoBehaviour
             // Track that this document was examined
             locationListExamined = true;
             
-            // Disable player movement and camera input
-            if (inputManager != null)
-            {
-                inputManager.SetUIMode(true);
-            }
-            else
-            {
-                // Fallback if InputManager is not available
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-            
             // Disable player interaction during document view
             if (interactionManager != null)
             {
                 interactionManager.SetInteractionEnabled(false);
             }
+            
+            // Unlock cursor for UI interaction
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
             
             // Check if both documents have been examined
             CheckClueReveal();
@@ -101,24 +89,17 @@ public class LocationClueSystem : MonoBehaviour
             
             // Track that this document was examined
             transportCardExamined = true;
-            
-            // Disable player movement and camera input
-            if (inputManager != null)
-            {
-                inputManager.SetUIMode(true);
-            }
-            else
-            {
-                // Fallback if InputManager is not available
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
+
             
             // Disable player interaction during document view
             if (interactionManager != null)
             {
                 interactionManager.SetInteractionEnabled(false);
             }
+            
+            // Unlock cursor for UI interaction
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
             
             // Check if both documents have been examined
             CheckClueReveal();
@@ -132,24 +113,16 @@ public class LocationClueSystem : MonoBehaviour
         {
             documentViewPanel.SetActive(false);
         }
-        
-        // Re-enable player movement and camera input
-        if (inputManager != null)
-        {
-            inputManager.SetUIMode(false);
-        }
-        else
-        {
-            // Fallback if InputManager is not available
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
-        
+
         // Re-enable player interaction
         if (interactionManager != null)
         {
             interactionManager.SetInteractionEnabled(true);
         }
+        
+        // Re-lock cursor for gameplay
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
     
     private void CheckClueReveal()

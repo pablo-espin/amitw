@@ -34,15 +34,11 @@ public class FalseClueSystem : MonoBehaviour
 
     // References for interaction
     private PlayerInteractionManager interactionManager;
-    private InputManager inputManager;
-    
+
     void Start()
     {
         // Find the interaction manager
         interactionManager = FindObjectOfType<PlayerInteractionManager>();
-        
-        // Find the input manager
-        inputManager = InputManager.Instance;
         
         // Set up UI
         if (submitCaptchaButton != null)
@@ -101,18 +97,11 @@ public class FalseClueSystem : MonoBehaviour
             // Disable player interaction while using computer
             if (interactionManager != null)
                 interactionManager.SetInteractionEnabled(false);
-            
-            // Disable player movement and camera rotation
-            if (inputManager != null)
-            {
-                inputManager.SetUIMode(true);
-            }
-            else
-            {
-                // Fallback if InputManager is not available
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
+                
+            // Unlock the cursor for UI interaction
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
         }
     }
     
@@ -125,18 +114,10 @@ public class FalseClueSystem : MonoBehaviour
         // Re-enable player interaction
         if (interactionManager != null)
             interactionManager.SetInteractionEnabled(true);
-        
-        // Re-enable player movement and camera rotation
-        if (inputManager != null)
-        {
-            inputManager.SetUIMode(false);
-        }
-        else
-        {
-            // Fallback if InputManager is not available
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
+            
+        // Re-lock the cursor for gameplay
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
     
     private void SwitchTab(bool showCaptcha)
