@@ -14,29 +14,47 @@ public class FirstPersonMovement : MonoBehaviour
     Rigidbody rigidbody;
     /// <summary> Functions to override movement speed. Will use the last added override. </summary>
     public List<System.Func<float>> speedOverrides = new List<System.Func<float>>();
+    
+    // Reference to input manager
+    private InputManager inputManager;
 
     void Awake()
     {
         // Get the rigidbody on this.
         rigidbody = GetComponent<Rigidbody>();
     }
+    
+    void Start()
+    {
+        // Get reference to input manager
+        inputManager = InputManager.Instance;
+    }
 
     void FixedUpdate()
     {
-        // Update IsRunning from input.
-        IsRunning = canRun && Input.GetKey(runningKey);
-
-        // Get targetMovingSpeed.
-        float targetMovingSpeed = IsRunning ? runSpeed : speed;
-        if (speedOverrides.Count > 0)
+        // Only process movement if player input is enabled
+        if (inputManager == null || inputManager.IsPlayerInputEnabled)
         {
-            targetMovingSpeed = speedOverrides[speedOverrides.Count - 1]();
+            // Update IsRunning from input.
+            IsRunning = canRun && Input.GetKey(runningKey);
+
+            // Get targetMovingSpeed.
+            float targetMovingSpeed = IsRunning ? runSpeed : speed;
+            if (speedOverrides.Count > 0)
+            {
+                targetMovingSpeed = speedOverrides[speedOverrides.Count - 1]();
+            }
+
+            // Get targetVelocity from input.
+            Vector2 targetVelocity = new Vector2(Input.GetAxis("Horizontal") * targetMovingSpeed, Input.GetAxis("Vertical") * targetMovingSpeed);
+
+            // Apply movement.
+            rigidbody.linearVelocity = transform.rotation * new Vector3(targetVelocity.x, rigidbody.linearVelocity.y, targetVelocity.y);
         }
-
-        // Get targetVelocity from input.
-        Vector2 targetVelocity =new Vector2( Input.GetAxis("Horizontal") * targetMovingSpeed, Input.GetAxis("Vertical") * targetMovingSpeed);
-
-        // Apply movement.
-        rigidbody.linearVelocity = transform.rotation * new Vector3(targetVelocity.x, rigidbody.linearVelocity.y, targetVelocity.y);
+        else
+        {
+            // Stop movement when input is disabled
+            rigidbody.linearVelocity = new Vector3(0, rigidbody.linearVelocity.y, 0);
+        }
     }
 }
