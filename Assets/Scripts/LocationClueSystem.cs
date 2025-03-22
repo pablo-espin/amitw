@@ -32,6 +32,7 @@ public class LocationClueSystem : MonoBehaviour
     
     // References for interaction
     private PlayerInteractionManager interactionManager;
+    private UIMovementBlocker movementBlocker;
     
     void Start()
     {
@@ -49,6 +50,9 @@ public class LocationClueSystem : MonoBehaviour
         {
             documentViewPanel.SetActive(false);
         }
+
+        // Find the movement blocker
+        movementBlocker = FindObjectOfType<UIMovementBlocker>();
     }
     
     public void ExamineLocationList()
@@ -62,6 +66,10 @@ public class LocationClueSystem : MonoBehaviour
             
             // Track that this document was examined
             locationListExamined = true;
+
+            // Block player movement
+            if (movementBlocker != null)
+            movementBlocker.BlockMovement();
             
             // Disable player interaction during document view
             if (interactionManager != null)
@@ -89,6 +97,10 @@ public class LocationClueSystem : MonoBehaviour
             
             // Track that this document was examined
             transportCardExamined = true;
+
+            // Block player movement
+            if (movementBlocker != null)
+            movementBlocker.BlockMovement();
             
             // Disable player interaction during document view
             if (interactionManager != null)
@@ -112,7 +124,11 @@ public class LocationClueSystem : MonoBehaviour
         {
             documentViewPanel.SetActive(false);
         }
-        
+
+        // Unblock player movement
+        if (movementBlocker != null)
+        movementBlocker.UnblockMovement();
+
         // Re-enable player interaction
         if (interactionManager != null)
         {

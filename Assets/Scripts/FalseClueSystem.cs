@@ -34,7 +34,8 @@ public class FalseClueSystem : MonoBehaviour
 
     // References for interaction
     private PlayerInteractionManager interactionManager;
-    
+    private UIMovementBlocker movementBlocker;
+
     void Start()
     {
         // Find the interaction manager
@@ -69,6 +70,8 @@ public class FalseClueSystem : MonoBehaviour
             
         // Generate initial CAPTCHA
         GenerateNewCaptcha();
+
+        movementBlocker = FindObjectOfType<UIMovementBlocker>();
     }
     
     // Public method to check if computer is locked
@@ -101,6 +104,10 @@ public class FalseClueSystem : MonoBehaviour
             // Unlock the cursor for UI interaction
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+
+            // Block player movement
+            if (movementBlocker != null)
+            movementBlocker.BlockMovement();
         }
     }
     
@@ -113,6 +120,10 @@ public class FalseClueSystem : MonoBehaviour
         // Re-enable player interaction
         if (interactionManager != null)
             interactionManager.SetInteractionEnabled(true);
+
+        // Unblock player movement
+        if (movementBlocker != null)
+        movementBlocker.UnblockMovement();
             
         // Re-lock the cursor for gameplay
         Cursor.lockState = CursorLockMode.Locked;

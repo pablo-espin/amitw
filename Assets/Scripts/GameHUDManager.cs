@@ -53,6 +53,7 @@ public class GameHUDManager : MonoBehaviour
     private PlayerInteractionManager interactionManager;
     private MemorySphere currentMemorySphere;
     private Transform playerTransform;
+    private UIMovementBlocker movementBlocker;
 
     private void Start()
     {
@@ -76,6 +77,7 @@ public class GameHUDManager : MonoBehaviour
 
         // Find references
         interactionManager = FindObjectOfType<PlayerInteractionManager>();
+        movementBlocker = FindObjectOfType<UIMovementBlocker>();
         
         // Find the player for stats tracking
         playerTransform = Camera.main.transform;
@@ -130,7 +132,11 @@ public class GameHUDManager : MonoBehaviour
                 decryptionInput.ActivateInputField();
             }
         }
-        
+
+        // Block player movement
+        if (movementBlocker != null)
+        movementBlocker.BlockMovement();
+
         // Ensure cursor is visible and unlocked when panel is open
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -149,6 +155,10 @@ public class GameHUDManager : MonoBehaviour
             decryptionPanel.SetActive(false);
         }
         
+        // Unblock player movement
+        if (movementBlocker != null)
+        movementBlocker.UnblockMovement();
+
         // Restore cursor state
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -327,7 +337,11 @@ public class GameHUDManager : MonoBehaviour
                 statsText.text = stats;
             }
         }
-        
+
+        // Block player movement
+        if (movementBlocker != null)
+        movementBlocker.BlockMovement();
+
         // Unlock cursor for UI interaction
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
