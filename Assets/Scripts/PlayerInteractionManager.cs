@@ -198,4 +198,16 @@ public class PlayerInteractionManager : MonoBehaviour
             HideInteractionPrompt();
         }
     }
+    
+    // Check if interaction is currently enabled
+    public bool IsInteractionEnabled()
+    {
+        return canInteract;
+    }
+    
+    // Get the current memory sphere reference
+    public MemorySphere GetCurrentMemorySphere()
+    {
+        return currentMemorySphere;
+    }
 }
