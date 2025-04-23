@@ -46,6 +46,9 @@ public class InteractionSoundManager : MonoBehaviour
     // Singleton instance
     public static InteractionSoundManager Instance { get; private set; }
 
+    // Dictionary to track 3D positional sound sources
+    private Dictionary<string, PositionalSoundInfo> positionalSounds = new Dictionary<string, PositionalSoundInfo>();
+
     private void Awake()
     {
         // Singleton setup
@@ -59,6 +62,91 @@ public class InteractionSoundManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+        // Class to store info about positional sounds
+    private class PositionalSoundInfo
+    {
+        public AudioSource source;
+        public Transform targetTransform;
+        public float maxDistance;
+        public float baseVolume;
+    }
+        
+    private Transform playerTransform;
+    
+    private void Start()
+    {
+        // Find player transform - usually the camera for audio purposes
+        playerTransform = Camera.main.transform;
+        
+        // Start updating positional sounds
+        InvokeRepeating("UpdatePositionalSounds", 0.1f, 0.1f);
+    }
+    
+    // Update positional sound volumes based on distance
+    private void UpdatePositionalSounds()
+    {
+        if (playerTransform == null) return;
+        
+        foreach (var entry in positionalSounds)
+        {
+            PositionalSoundInfo info = entry.Value;
+            if (info.source != null && info.targetTransform != null)
+            {
+                float distance = Vector3.Distance(playerTransform.position, info.targetTransform.position);
+                float volumeFactor = Mathf.Clamp01(1.0f - (distance / info.maxDistance));
+                
+                // Update volume based on distance
+                info.source.volume = info.baseVolume * volumeFactor * masterVolume;
+                
+                // Update position
+                info.source.transform.position = info.targetTransform.position;
+            }
+        }
+    }
+        
+    // Start a positional looping sound that changes volume with distance
+    public AudioSource StartPositionalLoopingSound(InteractionSoundCategory category, string soundId, Transform sourceTransform, float maxDistance = 10f)
+    {
+        if (category == null || category.clips == null || category.clips.Length == 0 || sourceTransform == null)
+            return null;
+            
+        // Stop previous instance if it exists
+        StopLoopingSound(soundId);
+        
+        // Create a new audio source for this looping sound
+        AudioSource loopSource = gameObject.AddComponent<AudioSource>();
+        loopSource.playOnAwake = false;
+        loopSource.loop = true;
+        
+        // Configure for 3D sound
+        loopSource.spatialBlend = 1.0f; // Full 3D
+        loopSource.rolloffMode = AudioRolloffMode.Linear;
+        loopSource.minDistance = 1f;
+        loopSource.maxDistance = maxDistance * 2f; // Set Unity's max distance for fall-off calculation
+        
+        // Get the first clip from the category (for looping sounds, we typically use the first one)
+        loopSource.clip = category.clips[0];
+        loopSource.volume = category.volume * masterVolume;
+        loopSource.Play();
+        
+        // Store the source for later reference
+        loopingSources[soundId] = loopSource;
+        
+        // Store positional information
+        positionalSounds[soundId] = new PositionalSoundInfo
+        {
+            source = loopSource,
+            targetTransform = sourceTransform,
+            maxDistance = maxDistance,
+            baseVolume = category.volume
+        };
+        
+        // Update position immediately
+        loopSource.transform.position = sourceTransform.position;
+        
+        return loopSource;
     }
 
     private void InitializeAudioSources()
@@ -160,8 +248,16 @@ public class InteractionSoundManager : MonoBehaviour
         PlaySound(tapToggle);
     }
 
+    // Modified method to start water running with position
+    public AudioSource StartWaterRunning(Transform waterSource)
+    {
+        return StartPositionalLoopingSound(waterRunning, "water_running", waterSource, 15f);
+    }
+        
+    // Override the original method to ensure it doesn't get called without a position
     public AudioSource StartWaterRunning()
     {
+        Debug.LogWarning("StartWaterRunning called without position - water sound will not be positional");
         return StartLoopingSound(waterRunning, "water_running");
     }
 

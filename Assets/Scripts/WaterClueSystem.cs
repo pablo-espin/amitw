@@ -180,11 +180,13 @@ public class WaterClueSystem : MonoBehaviour
                 waterFlowParticles.gameObject.SetActive(true);
                 waterFlowParticles.Play();
                 Debug.Log("Water flow effect activated");
-
-                // Start water running sound
+                
+                // Start water running sound with position
                 if (InteractionSoundManager.Instance != null)
                 {
-                    InteractionSoundManager.Instance.StartWaterRunning();
+                    // Pass the tap transform (or water particles transform) to position the sound
+                    Transform soundPosition = waterFlowParticles.transform;
+                    InteractionSoundManager.Instance.StartWaterRunning(soundPosition);
                 }
             }
             else
