@@ -56,6 +56,13 @@ public class ElectricityClueSystem : MonoBehaviour
         if (!cableConnected)
         {
             Debug.Log("Connecting cable");
+
+            // Play cable connection sound
+            if (InteractionSoundManager.Instance != null)
+            {
+                InteractionSoundManager.Instance.PlayCableConnection();
+            }
+
             // Trigger the animation
             if (cableAnimator != null)
             {

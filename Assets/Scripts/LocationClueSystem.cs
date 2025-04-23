@@ -59,6 +59,12 @@ public class LocationClueSystem : MonoBehaviour
     {
         if (documentViewPanel != null && documentImage != null)
         {
+            // Play location list examine sound
+            if (InteractionSoundManager.Instance != null)
+            {
+                InteractionSoundManager.Instance.PlayLocationListExamine();
+            }
+
             // Set up the document view
             documentImage.sprite = locationListSprite;
             documentTitleText.text = locationListTitle;
@@ -91,6 +97,12 @@ public class LocationClueSystem : MonoBehaviour
     {
         if (documentViewPanel != null && documentImage != null)
         {
+            // Play bus card examine sound
+            if (InteractionSoundManager.Instance != null)
+            {
+                InteractionSoundManager.Instance.PlayBusCardExamine();
+            }
+            
             // Set up the document view
             documentImage.sprite = transportCardSprite;
             documentTitleText.text = transportCardTitle;

@@ -68,6 +68,12 @@ public class MemorySphere : MonoBehaviour
     {
         if (!isDecrypted && !isCorrupted)
         {
+        // Play interaction sound
+            if (InteractionSoundManager.Instance != null)
+            {
+                InteractionSoundManager.Instance.PlayMemorySphereInteraction();
+            }
+
             // Show decryption panel through HUD regardless of state
             // (the HUD manager will handle showing the deleted message if needed)
             FindObjectOfType<GameHUDManager>().ShowDecryptionPanel();

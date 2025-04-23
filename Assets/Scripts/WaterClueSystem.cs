@@ -56,11 +56,23 @@ public class WaterClueSystem : MonoBehaviour
         {
             Debug.Log("Opening tap");
             OpenTap();
+
+            // Play tap open sound
+            if (InteractionSoundManager.Instance != null)
+            {
+                InteractionSoundManager.Instance.PlayTapToggle();
+            }
         }
         else
         {
             Debug.Log("Closing tap");
             CloseTap();
+
+            // Play tap close sound
+            if (InteractionSoundManager.Instance != null)
+            {
+                InteractionSoundManager.Instance.PlayTapToggle();
+            }
         }
     }
     
@@ -68,6 +80,12 @@ public class WaterClueSystem : MonoBehaviour
     public void InteractWithValve()
     {
         Debug.Log("Valve interaction triggered, current state: " + (valveOpened ? "Open" : "Closed"));
+
+        // Play valve interaction sound
+        if (InteractionSoundManager.Instance != null)
+        {
+            InteractionSoundManager.Instance.PlayValveInteraction();
+        }
         
         if (!valveOpened)
         {
@@ -100,6 +118,12 @@ public class WaterClueSystem : MonoBehaviour
         if (waterFlowParticles)
         {
             waterFlowParticles.Stop();
+
+            // Stop water running sound
+            if (InteractionSoundManager.Instance != null)
+            {
+                InteractionSoundManager.Instance.StopWaterRunning();
+            }
         }
         
         // Drain water if it was filling
@@ -128,6 +152,12 @@ public class WaterClueSystem : MonoBehaviour
         if (waterFlowParticles)
         {
             waterFlowParticles.Stop();
+
+            // Stop water running sound
+            if (InteractionSoundManager.Instance != null)
+            {
+                InteractionSoundManager.Instance.StopWaterRunning();
+            }
         }
         
         // Drain water if it was filling
@@ -150,6 +180,12 @@ public class WaterClueSystem : MonoBehaviour
                 waterFlowParticles.gameObject.SetActive(true);
                 waterFlowParticles.Play();
                 Debug.Log("Water flow effect activated");
+
+                // Start water running sound
+                if (InteractionSoundManager.Instance != null)
+                {
+                    InteractionSoundManager.Instance.StartWaterRunning();
+                }
             }
             else
             {

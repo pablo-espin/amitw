@@ -89,7 +89,13 @@ public class FalseClueSystem : MonoBehaviour
             Debug.Log("Computer is locked");
             return;
         }
-        
+
+        // Play computer boot sound
+        if (InteractionSoundManager.Instance != null)
+        {
+            InteractionSoundManager.Instance.PlayComputerBoot();
+        }
+
         // Show the computer screen
         if (computerScreen != null)
         {
@@ -186,7 +192,13 @@ public class FalseClueSystem : MonoBehaviour
     {
         captchaSolved = true;
         computerLocked = true;
-        
+
+        // Play false clue reveal sound
+        if (InteractionSoundManager.Instance != null)
+        {
+            InteractionSoundManager.Instance.PlayFalseClueReveal();
+        }
+
         // Show the clue panel briefly
         if (captchaPanel != null)
             captchaPanel.SetActive(false);
@@ -221,10 +233,25 @@ public class FalseClueSystem : MonoBehaviour
         
         // Show matrix effect
         if (matrixEffectPanel != null)
+        {
             matrixEffectPanel.SetActive(true);
+            
+            // Play matrix animation sound
+            if (InteractionSoundManager.Instance != null)
+            {
+                InteractionSoundManager.Instance.StartMatrixAnimation();
+            }
+        }
         
         // Automatically close computer after another delay
         yield return new WaitForSeconds(5.0f);
+
+        // Stop matrix animation sound
+        if (InteractionSoundManager.Instance != null)
+        {
+            InteractionSoundManager.Instance.StopMatrixAnimation();
+        }
+
         CloseComputer();
     }
     
