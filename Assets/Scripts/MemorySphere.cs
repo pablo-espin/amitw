@@ -24,6 +24,9 @@ public class MemorySphere : MonoBehaviour
     [SerializeField] private float pulseFrequency = 1.5f; // How fast the sphere pulses when deleted
     [SerializeField] private float minScale = 0.95f; // Minimum scale during pulse
     [SerializeField] private float maxScale = 1.05f; // Maximum scale during pulse
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource ambientSoundSource;
     
     private Vector3 startPosition;
     private Vector3 originalScale;
@@ -157,8 +160,35 @@ public class MemorySphere : MonoBehaviour
                         ", Material: " + 
                         (deletedMaterial != null ? "Found" : "Not Found"));
         }
-        
+
+        // Stop the ambient sound when sphere is deleted
+        if (ambientSoundSource != null)
+        {            
+            // Fade out gracefully
+            StartCoroutine(FadeOutAudio(1.0f)); // Fade out over 1 second
+        }        
+
         Debug.Log("Memory permanently deleted");
+    }
+
+    // Fade out memory sphere ambient audio
+    private System.Collections.IEnumerator FadeOutAudio(float fadeDuration)
+    {
+        if (ambientSoundSource == null) yield break;
+        
+        float startVolume = ambientSoundSource.volume;
+        float timer = 0;
+        
+        while (timer < fadeDuration)
+        {
+            timer += Time.deltaTime;
+            ambientSoundSource.volume = Mathf.Lerp(startVolume, 0, timer / fadeDuration);
+            yield return null;
+        }
+        
+        // Ensure volume is zero and stop the sound
+        ambientSoundSource.volume = 0;
+        ambientSoundSource.Stop();
     }
 
     public bool IsDecrypted()
