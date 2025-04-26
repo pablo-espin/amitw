@@ -9,17 +9,17 @@ public class ProximityDialogueTrigger : MonoBehaviour
     [SerializeField] private float volume = 1f;
     [Tooltip("Text representation of the dialogue (for debugging)")]
     [SerializeField, TextArea(2, 5)] private string dialogueText;
-    
+
     [Header("Trigger Settings")]
     [SerializeField] private float triggerRadius = 3f;
     [SerializeField] private bool requireLookingAt = false;
     [SerializeField] private float lookingAtAngle = 40f;
     [SerializeField] private LayerMask playerLayer;
     [SerializeField] private bool showTriggerRadius = true;
-    
+
     private bool hasPlayed = false;
     private Transform player;
-    
+
     private void OnEnable()
     {
         // Find player once on enable
@@ -30,18 +30,18 @@ public class ProximityDialogueTrigger : MonoBehaviour
             player = Camera.main?.transform;
         }
     }
-    
+
     private void Update()
     {
         if (player == null || (playOnce && hasPlayed))
             return;
-            
+
         // Check if player is within trigger radius
         float distance = Vector3.Distance(transform.position, player.position);
         if (distance <= triggerRadius)
         {
             bool canTrigger = true;
-            
+
             // Check if player needs to be looking at the trigger
             if (requireLookingAt)
             {
@@ -49,14 +49,14 @@ public class ProximityDialogueTrigger : MonoBehaviour
                 float angle = Vector3.Angle(player.forward, directionToTrigger);
                 canTrigger = angle <= lookingAtAngle;
             }
-            
+
             if (canTrigger)
             {
                 TriggerDialogue();
             }
         }
     }
-    
+
     private void TriggerDialogue()
     {
         if (NarratorManager.Instance != null && dialogueClip != null)
@@ -66,22 +66,22 @@ public class ProximityDialogueTrigger : MonoBehaviour
                 hasPlayed = true;
         }
     }
-    
+
     // Reset the played state (for testing or scripted resets)
     public void ResetTrigger()
     {
         hasPlayed = false;
     }
-    
+
     // Visual debugging
     private void OnDrawGizmos()
     {
         if (!showTriggerRadius)
             return;
-            
+
         Gizmos.color = hasPlayed ? Color.gray : Color.cyan;
         Gizmos.DrawWireSphere(transform.position, triggerRadius);
-        
+
         if (requireLookingAt)
         {
             Gizmos.color = Color.yellow;

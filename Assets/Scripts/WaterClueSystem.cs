@@ -55,6 +55,11 @@ public class WaterClueSystem : MonoBehaviour
         if (!tapOpened)
         {
             Debug.Log("Opening tap");
+            // Check if valve is closed for narrator dialogue
+            if (!valveOpened && GameInteractionDialogueManager.Instance != null)
+            {
+                GameInteractionDialogueManager.Instance.OnWaterTapWithValveClosed();
+            }
             OpenTap();
 
             // Play tap open sound
@@ -92,6 +97,12 @@ public class WaterClueSystem : MonoBehaviour
             Debug.Log("Opening valve");
             OpenValve();
             Debug.Log("Valve opened: " + valveOpened);
+
+            // Trigger narrator dialogue when valve is opened
+            if (GameInteractionDialogueManager.Instance != null)
+            {
+                GameInteractionDialogueManager.Instance.OnValveOpened();
+            }
         }
         else
         {

@@ -59,6 +59,12 @@ public class LocationClueSystem : MonoBehaviour
     {
         if (documentViewPanel != null && documentImage != null)
         {
+            // Trigger dialogue for examining the location list
+            if (GameInteractionDialogueManager.Instance != null)
+            {
+                GameInteractionDialogueManager.Instance.OnLocationListExamined();
+            }
+
             // Play location list examine sound
             if (InteractionSoundManager.Instance != null)
             {

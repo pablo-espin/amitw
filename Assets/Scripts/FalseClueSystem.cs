@@ -193,6 +193,12 @@ public class FalseClueSystem : MonoBehaviour
         captchaSolved = true;
         computerLocked = true;
 
+        // Trigger dialogue for solving the CAPTCHA
+        if (GameInteractionDialogueManager.Instance != null)
+        {
+            GameInteractionDialogueManager.Instance.OnCaptchaSolved();
+        }
+
         // Play false clue reveal sound
         if (InteractionSoundManager.Instance != null)
         {

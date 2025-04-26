@@ -103,6 +103,12 @@ public class ElectricityClueSystem : MonoBehaviour
 
     private void PowerOn()
     {
+        // Trigger dialogue for electricity connection
+        if (GameInteractionDialogueManager.Instance != null)
+        {
+            GameInteractionDialogueManager.Instance.OnElectricityConnected();
+        }
+
         // Turn on lights with a brief delay between them for effect
         StartCoroutine(SequentialLightUp());
     }

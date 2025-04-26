@@ -71,7 +71,13 @@ public class MemorySphere : MonoBehaviour
     {
         if (!isDecrypted && !isCorrupted)
         {
-        // Play interaction sound
+            // Check if this is the first interaction with any memory sphere
+            if (GameInteractionDialogueManager.Instance != null)
+            {
+                GameInteractionDialogueManager.Instance.OnMemorySphereFirstInteraction();
+            }
+
+            // Play interaction sound
             if (InteractionSoundManager.Instance != null)
             {
                 InteractionSoundManager.Instance.PlayMemorySphereInteraction();

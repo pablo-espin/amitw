@@ -96,10 +96,29 @@ public class ClueProgressUI : MonoBehaviour
                 break;
         }
         
-        // Update solved clue count (excluding false clue)
-        solvedClueCount = (waterClueSolved ? 1 : 0) + 
-                         (electricityClueSolved ? 1 : 0) + 
-                         (locationClueSolved ? 1 : 0);
+        // Trigger first clue found dialogue
+        if (GameInteractionDialogueManager.Instance != null)
+        {
+            int previousSolvedCount = solvedClueCount;
+            
+            // Update solved clue count (excluding false clue)
+            solvedClueCount = (waterClueSolved ? 1 : 0) + 
+                            (electricityClueSolved ? 1 : 0) + 
+                            (locationClueSolved ? 1 : 0);
+            
+            // If this is the first solved clue (excluding false clue)
+            if (previousSolvedCount == 0 && solvedClueCount == 1)
+            {
+                GameInteractionDialogueManager.Instance.OnFirstClueFound(clueType);
+            }
+        }
+        else
+        {
+            // Update solved clue count (excluding false clue)
+            solvedClueCount = (waterClueSolved ? 1 : 0) + 
+                            (electricityClueSolved ? 1 : 0) + 
+                            (locationClueSolved ? 1 : 0);
+        }
         
         // Update intensity of memory sphere icon based on progress
         Color iconColor = memorySphereIcon.color;
