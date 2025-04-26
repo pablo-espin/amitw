@@ -42,3 +42,8 @@ sysinfo.txt
 
 # Crashlytics generated file
 crashlytics-build.properties
+
+# Lightmaps
+Assets\Scenes\GameLevel\Lightmap-0_comp_light.exr
+Assets\Scenes\GameLevel\Lightmap-1_comp_light.exr
+Assets\Scenes\GameLevel\ReflectionProbe-0.exr
