@@ -6,10 +6,11 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
     
-    // Game states
+    // Game states - added IntroCutscene state
     public enum GameState
     {
         HomeScreen,
+        IntroCutscene,
         MemoryInput,
         Gameplay,
         EndScreen
@@ -37,6 +38,14 @@ public class GameManager : MonoBehaviour
     }
 
     public void StartGame()
+    {
+        // Change to cutscene state instead of directly to gameplay
+        ChangeState(GameState.IntroCutscene);
+        SceneManager.LoadScene("IntroCutscene");
+    }
+    
+    // Called from the cutscene when it completes
+    public void StartGameplay()
     {
         ChangeState(GameState.Gameplay);
         SceneManager.LoadScene("GameLevel");

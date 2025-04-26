@@ -12,6 +12,9 @@ EditorBuildSettings:
     path: Assets/Scenes/MemoryInput.unity
     guid: 028f5bb78e1457d4f812e7020552b6e7
   - enabled: 1
+    path: Assets/Scenes/IntroCutscene.unity
+    guid: ccafec61da4e0fb4c9aaaa937847bb9b
+  - enabled: 1
     path: Assets/Scenes/GameLevel.unity
     guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 1
