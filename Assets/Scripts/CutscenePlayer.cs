@@ -13,8 +13,8 @@ public class SimpleCutscenePlayer : MonoBehaviour
     [SerializeField] private Image foregroundImage;
     [SerializeField] private Image backgroundImage;
     [SerializeField] private Sprite[] imageSequence; // 4 images recommended
-    [SerializeField] private float displayTime = 6.5f;
-    [SerializeField] private float crossfadeTime = 1.5f;
+    [SerializeField] private float displayTime = 5.5f;
+    [SerializeField] private float crossfadeTime = 1f;
     
     [Header("Audio")]
     [SerializeField] private AudioSource narratorSource;
@@ -49,9 +49,34 @@ public class SimpleCutscenePlayer : MonoBehaviour
     private float cutsceneTimer = 0f;
     private float[] imageStartZooms; // Starting zoom for each image
     private float[] imageEndZooms;   // Ending zoom for each image
-    private Vector2[] imageStartPositions; // Starting positions for each image
-    private Vector2[] imageEndPositions;   // Ending positions for each image
-    
+    //private Vector2[] imageStartPositions; // Starting positions for each image
+    //private Vector2[] imageEndPositions;   // Ending positions for each image
+
+    // Initialize these in Awake() or Start()
+    private void InitializeKenBurnsParameters()
+    {
+        int imageCount = imageSequence.Length;
+        imageStartZooms = new float[imageCount];
+        imageEndZooms = new float[imageCount];
+        
+        for (int i = 0; i < imageCount; i++)
+        {
+            // Alternate between zooming in and zooming out
+            if (i % 2 == 0)
+            {
+                // Zoom in
+                imageStartZooms[i] = 1.0f;
+                imageEndZooms[i] = 1.0f + zoomAmount;
+            }
+            else
+            {
+                // Zoom out
+                imageStartZooms[i] = 1.0f + zoomAmount;
+                imageEndZooms[i] = 1.0f;
+            }
+        }
+    }
+
     private void Awake()
     {
         // Make sure we have the right number of images
@@ -76,46 +101,6 @@ public class SimpleCutscenePlayer : MonoBehaviour
             // Start with the foreground visible and background invisible
             foregroundImage.color = new Color(1, 1, 1, 0);
             backgroundImage.color = new Color(1, 1, 1, 0);
-        }
-    }
-
-    private void InitializeKenBurnsParameters()
-    {
-        int imageCount = imageSequence.Length;
-        imageStartZooms = new float[imageCount];
-        imageEndZooms = new float[imageCount];
-        imageStartPositions = new Vector2[imageCount];
-        imageEndPositions = new Vector2[imageCount];
-        
-        // Generate random but consistent parameters for each image
-        System.Random rand = new System.Random(42); // Use seed for consistency
-        
-        for (int i = 0; i < imageCount; i++)
-        {
-            // Alternate between zooming in and zooming out
-            if (i % 2 == 0)
-            {
-                // Zoom in
-                imageStartZooms[i] = 1.0f;
-                imageEndZooms[i] = 1.0f + zoomAmount;
-            }
-            else
-            {
-                // Zoom out
-                imageStartZooms[i] = 1.0f + zoomAmount;
-                imageEndZooms[i] = 1.0f;
-            }
-            
-            // Generate random but subtle starting positions
-            float startX = ((float)rand.NextDouble() * 2 - 1) * panAmount;
-            float startY = ((float)rand.NextDouble() * 2 - 1) * panAmount;
-            
-            // Generate ending positions in opposite directions
-            float endX = -startX;
-            float endY = -startY;
-            
-            imageStartPositions[i] = new Vector2(startX, startY);
-            imageEndPositions[i] = new Vector2(endX, endY);
         }
     }
 
@@ -226,11 +211,10 @@ public class SimpleCutscenePlayer : MonoBehaviour
         backgroundImage.color = new Color(1, 1, 1, 0);
         
         // // Reset Ken Burns effect for the new image
-        // if (useKenBurnsEffect)
-        // {
-        //     backgroundImage.rectTransform.localScale = Vector3.one;
-        //     backgroundImage.rectTransform.localPosition = Vector3.zero;
-        // }
+        if (useKenBurnsEffect)
+        {
+            backgroundImage.rectTransform.localScale = Vector3.one * imageStartZooms[nextIndex];
+        }
         
         // Fade in background, fade out foreground
         float elapsed = 0f;
@@ -294,49 +278,60 @@ public class SimpleCutscenePlayer : MonoBehaviour
         }
     }
     
+
     private void ApplyKenBurnsEffect()
     {
-        if (!useKenBurnsEffect || foregroundImage == null)
-            return;
-        
-        // Get the total display time for each image (display + crossfade)
-        float totalImageTime = displayTime + crossfadeTime;
-        
-        // Calculate which image we're on
-        int imageIndex = Mathf.Min(Mathf.FloorToInt(cutsceneTimer / totalImageTime), imageSequence.Length - 1);
-        
-        // Calculate how far we are through this particular image (0 to 1)
-        float imageProgress = (cutsceneTimer - (imageIndex * totalImageTime)) / displayTime;
-        
-        // Clamp to ensure we don't exceed 1.0 during crossfade time
-        imageProgress = Mathf.Clamp01(imageProgress);
-        
-        // Apply the effect using the pre-calculated parameters for this image
-        float zoom = Mathf.Lerp(imageStartZooms[imageIndex], imageEndZooms[imageIndex], imageProgress);
-        
-        Vector2 startPos = imageStartPositions[imageIndex];
-        Vector2 endPos = imageEndPositions[imageIndex];
-        float posX = Mathf.Lerp(startPos.x, endPos.x, imageProgress);
-        float posY = Mathf.Lerp(startPos.y, endPos.y, imageProgress);
-        
-        // Apply to the foreground image
-        foregroundImage.rectTransform.localScale = Vector3.one * zoom;
-        foregroundImage.rectTransform.localPosition = new Vector3(posX, posY, 0);
-        
-        // If we're in crossfade, apply same effect to background image but with different progress
-        if (backgroundImage.color.a > 0)
+        // Only apply to visible image
+        if (foregroundImage != null)
         {
-            // Get parameters for next image
-            int nextImageIndex = (imageIndex + 1) % imageSequence.Length;
+            // Get which image we're on
+            int imageIndex = Mathf.Min(Mathf.FloorToInt(cutsceneTimer / (displayTime + crossfadeTime)), imageSequence.Length - 1);
             
-            // For background image, we're just beginning the effect
-            float nextZoom = imageStartZooms[nextImageIndex];
-            Vector2 nextPos = imageStartPositions[nextImageIndex];
+            // Calculate normalized time within the current image display (0 to 1)
+            float timeInCurrentImage = cutsceneTimer - (imageIndex * (displayTime + crossfadeTime));
+            float imageDisplayProgress = timeInCurrentImage / displayTime;
             
-            backgroundImage.rectTransform.localScale = Vector3.one * nextZoom;
-            backgroundImage.rectTransform.localPosition = new Vector3(nextPos.x, nextPos.y, 0);
+            // Clamp progress to 0-1 range to prevent values exceeding 1 during crossfade
+            imageDisplayProgress = Mathf.Clamp01(imageDisplayProgress);
+            
+            // Determine if this image should zoom in or out (alternate)
+            bool shouldZoomIn = (imageIndex % 2 == 0);
+            
+            // Apply the appropriate zoom effect
+            float zoom;
+            if (shouldZoomIn)
+            {
+                // Zoom in from 1.0 to 1.0 + zoomAmount
+                zoom = 1.0f + (imageDisplayProgress * zoomAmount);
+            }
+            else
+            {
+                // Zoom out from 1.0 + zoomAmount to 1.0
+                zoom = (1.0f + zoomAmount) - (imageDisplayProgress * zoomAmount);
+            }
+            
+            // Apply zoom
+            foregroundImage.rectTransform.localScale = Vector3.one * zoom;
+            
+            // Subtle panning effect (if desired)
+            float panX = Mathf.Sin(imageDisplayProgress * Mathf.PI * 2) * panAmount;
+            float panY = Mathf.Cos(imageDisplayProgress * Mathf.PI * 2) * panAmount;
+            foregroundImage.rectTransform.localPosition = new Vector3(panX, panY, 0);
+            
+            // If background is visible during crossfade, set it up for its upcoming effect
+            if (backgroundImage.color.a > 0)
+            {
+                int nextIndex = (imageIndex + 1) % imageSequence.Length;
+                bool nextShouldZoomIn = (nextIndex % 2 == 0);
+                
+                // Set initial zoom for next image
+                float nextInitialZoom = nextShouldZoomIn ? 1.0f : (1.0f + zoomAmount);
+                backgroundImage.rectTransform.localScale = Vector3.one * nextInitialZoom;
+                backgroundImage.rectTransform.localPosition = Vector3.zero; // Start at center
+            }
         }
     }
+
         
     private IEnumerator FadeIn(float duration)
     {

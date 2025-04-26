@@ -307,7 +307,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 57e6658d40cf7a046ae7b23602979488, type: 3}
   - {fileID: 21300000, guid: 9632e71eb2dd3504bb5a0e579e848efc, type: 3}
   - {fileID: 21300000, guid: 794659c0024f7d04491076a182bfb561, type: 3}
-  displayTime: 6
+  displayTime: 5.5
   crossfadeTime: 1
   narratorSource: {fileID: 1220284609}
   narrationClips:
@@ -327,12 +327,12 @@ MonoBehaviour:
   panAmount: 0.075
   musicSource: {fileID: 2028565873}
   ambientSource: {fileID: 0}
-  backgroundMusic: {fileID: 8300000, guid: 86947ec1787fc734c85dff5a35f28d49, type: 3}
+  backgroundMusic: {fileID: 8300000, guid: 26abc7ffcd84bd345a5f112f62a56727, type: 3}
   ambientSound: {fileID: 0}
-  musicVolume: 0.1
+  musicVolume: 0.2
   ambientVolume: 0.3
   fadeInDuration: 2
-  fadeOutDuration: 5
+  fadeOutDuration: 3
 --- !u!4 &261721450
 Transform:
   m_ObjectHideFlags: 0
@@ -1052,7 +1052,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 86947ec1787fc734c85dff5a35f28d49, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 86947ec1787fc734c85dff5a35f28d49, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
