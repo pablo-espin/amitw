@@ -32,11 +32,11 @@ public class ProximityDialogueTrigger : MonoBehaviour
         CheckPlayerProximity();
 
         // Log whether player was found
-        Debug.Log($"ProximityTrigger '{dialogueID}': Player reference is {(player != null ? "FOUND" : "NULL")}");
+        //Debug.Log($"ProximityTrigger '{dialogueID}': Player reference is {(player != null ? "FOUND" : "NULL")}");
     
-        if (player != null) {
-        Debug.Log($"Player position: {player.position}, Trigger position: {transform.position}, Distance: {Vector3.Distance(transform.position, player.position)}");
-        }
+        //if (player != null) {
+        //Debug.Log($"Player position: {player.position}, Trigger position: {transform.position}, Distance: {Vector3.Distance(transform.position, player.position)}");
+        //}
     }
     
     private void FindPlayer()
@@ -108,10 +108,10 @@ public class ProximityDialogueTrigger : MonoBehaviour
         float distance = Vector3.Distance(transform.position, player.position);
         
         // Debug output to help troubleshoot
-        if (showTriggerRadius && !hasPlayed)
-        {
-            Debug.Log($"Trigger {dialogueID}: Player distance = {distance}, Radius = {triggerRadius}");
-        }
+        // if (showTriggerRadius && !hasPlayed)
+        // {
+        //     Debug.Log($"Trigger {dialogueID}: Player distance = {distance}, Radius = {triggerRadius}");
+        // }
         
         if (distance <= triggerRadius)
         {
