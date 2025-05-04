@@ -87,6 +87,14 @@ public class PlayerInteractionManager : MonoBehaviour
                 return;
             }
             
+            // Check for manual interactable
+            ManualInteractable manualObject = hit.collider.GetComponent<ManualInteractable>();
+            if (manualObject != null)
+            {
+                ShowInteractionPrompt(manualObject.GetInteractionPrompt());
+                return;
+            }
+            
             // If no valid interactable found, hide prompt
             HideInteractionPrompt();
         }
@@ -141,6 +149,14 @@ public class PlayerInteractionManager : MonoBehaviour
             if (falseClueObject != null)
             {
                 falseClueObject.Interact();
+                return;
+            }
+            
+            // Check for manual interactable
+            ManualInteractable manualObject = hit.collider.GetComponent<ManualInteractable>();
+            if (manualObject != null)
+            {
+                manualObject.Interact();
                 return;
             }
         }

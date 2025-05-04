@@ -33,6 +33,10 @@ public class InteractionSoundManager : MonoBehaviour
     [SerializeField] private InteractionSoundCategory falseClueReveal;
     [SerializeField] private InteractionSoundCategory matrixAnimation;
 
+    [Header("Manual Interaction Sounds")]
+    [SerializeField] private InteractionSoundCategory manualPickup;
+    [SerializeField] private InteractionSoundCategory pageFlip;
+
     [Header("Settings")]
     [SerializeField] private int audioSourcePoolSize = 5;
     [SerializeField] [Range(0f, 1f)] private float masterVolume = 1f;
@@ -291,6 +295,17 @@ public class InteractionSoundManager : MonoBehaviour
     public void PlayLocationListExamine()
     {
         PlaySound(locationListExamine);
+    }
+
+    // Manual interaction sounds
+    public void PlayManualPickup()
+    {
+        PlaySound(manualPickup);
+    }
+
+    public void PlayPageFlip()
+    {
+        PlaySound(pageFlip);
     }
 
     // False Clue System
