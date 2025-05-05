@@ -37,6 +37,13 @@ public class InteractionSoundManager : MonoBehaviour
     [SerializeField] private InteractionSoundCategory manualPickup;
     [SerializeField] private InteractionSoundCategory pageFlip;
 
+    [Header("Key Card Sounds")]
+    [SerializeField] private InteractionSoundCategory keyCardPickup;
+    [SerializeField] private InteractionSoundCategory keyCardDenied;
+    [SerializeField] private InteractionSoundCategory keyCardAccepted;
+    [SerializeField] private InteractionSoundCategory doorOpen;
+
+
     [Header("Settings")]
     [SerializeField] private int audioSourcePoolSize = 5;
     [SerializeField] [Range(0f, 1f)] private float masterVolume = 1f;
@@ -317,6 +324,27 @@ public class InteractionSoundManager : MonoBehaviour
     public void PlayFalseClueReveal()
     {
         PlaySound(falseClueReveal);
+    }
+
+    // Key Card Sounds
+    public void PlayKeyCardPickup()
+    {
+        PlaySound(keyCardPickup);
+    }
+
+    public void PlayKeyCardDenied()
+    {
+        PlaySound(keyCardDenied);
+    }
+
+    public void PlayKeyCardAccepted()
+    {
+        PlaySound(keyCardAccepted);
+    }
+
+    public void PlayDoorOpen()
+    {
+        PlaySound(doorOpen);
     }
 
     public AudioSource StartMatrixAnimation()

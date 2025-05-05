@@ -95,4 +95,18 @@ public class GameInteractionDialogueManager : MonoBehaviour
         if (interactionDialogue != null)
             interactionDialogue.TriggerInteractionDialogue("captcha_solved");
     }
+
+    // Door interaction - "Need key card"
+    public void OnDoorWithoutKeyCard()
+    {
+        if (interactionDialogue != null)
+            interactionDialogue.TriggerInteractionDialogue("door_no_keycard");
+    }
+
+    // Key card used - "Access granted"
+    public void OnKeyCardUsed()
+    {
+        if (interactionDialogue != null)
+            interactionDialogue.TriggerInteractionDialogue("door_keycard_used");
+    }
 }

@@ -94,6 +94,14 @@ public class PlayerInteractionManager : MonoBehaviour
                 ShowInteractionPrompt(manualObject.GetInteractionPrompt());
                 return;
             }
+
+            // Check for key card interactable
+            KeyCardInteractable keyCardObject = hit.collider.GetComponent<KeyCardInteractable>();
+            if (keyCardObject != null)
+            {
+                ShowInteractionPrompt(keyCardObject.GetInteractionPrompt());
+                return;
+            }
             
             // If no valid interactable found, hide prompt
             HideInteractionPrompt();
@@ -157,6 +165,14 @@ public class PlayerInteractionManager : MonoBehaviour
             if (manualObject != null)
             {
                 manualObject.Interact();
+                return;
+            }
+
+            // Check for key card interactable
+            KeyCardInteractable keyCardObject = hit.collider.GetComponent<KeyCardInteractable>();
+            if (keyCardObject != null)
+            {
+                keyCardObject.Interact();
                 return;
             }
         }

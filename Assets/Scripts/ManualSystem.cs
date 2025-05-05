@@ -151,7 +151,7 @@ public class ManualSystem : MonoBehaviour
     
     // Close the manual UI
     public void CloseManual()
-    {
+    {        
         if (manualPanel != null)
             manualPanel.SetActive(false);
             
@@ -167,18 +167,16 @@ public class ManualSystem : MonoBehaviour
         if (uiInputController != null)
             uiInputController.EnableGameplayInput();
             
-        // If this is the first time closing the manual, show the HUD indicator
+        // If this is the first time closing the manual, show the HUD indicator    
         if (manualFound && mapHUDIndicator != null && !mapHUDIndicator.activeSelf)
         {
             mapHUDIndicator.SetActive(true);
-            Debug.Log("Map HUD indicator activated after closing manual");
             
             // Trigger pulse effect to draw attention to the indicator
             ManualHUDIndicator indicatorScript = mapHUDIndicator.GetComponent<ManualHUDIndicator>();
             if (indicatorScript != null)
             {
                 indicatorScript.StartPulseHighlight();
-                Debug.Log("Starting pulse effect on map indicator");
             }
         }
     }
