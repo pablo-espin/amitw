@@ -32,10 +32,21 @@ public class UIInputController : MonoBehaviour
     
     public void EnableGameplayInput()
     {
-        if (playerInput != null && !string.IsNullOrEmpty(defaultActionMap))
+        if (playerInput != null)
         {
-            // Switch back to gameplay controls
-            playerInput.SwitchCurrentActionMap(defaultActionMap);
+            // First re-enable input system
+            playerInput.enabled = true;
+            
+            // Then switch back to gameplay controls
+            if (!string.IsNullOrEmpty(defaultActionMap))
+            {
+                try {
+                    playerInput.SwitchCurrentActionMap(defaultActionMap);
+                }
+                catch (System.Exception e) {
+                    Debug.LogWarning("Could not switch action map: " + e.Message);
+                }
+            }
         }
         
         if (starterAssetsInputs != null)
@@ -45,6 +56,9 @@ public class UIInputController : MonoBehaviour
             starterAssetsInputs.move = Vector2.zero;
             starterAssetsInputs.jump = false;
             starterAssetsInputs.sprint = false;
+            
+            // Re-enable cursor look
+            starterAssetsInputs.cursorInputForLook = true;
         }
         
         if (firstPersonController != null)
@@ -68,8 +82,11 @@ public class UIInputController : MonoBehaviour
     {
         if (playerInput != null)
         {
-            // Switch to UI controls or disable current map
-            playerInput.SwitchCurrentActionMap(""); // Create this action map or use ""
+            // Completely disable input system's processing of player input
+            playerInput.enabled = false;
+            
+            // ALSO switch to UI action map as a secondary safeguard
+            // playerInput.SwitchCurrentActionMap("UI");
         }
         
         if (starterAssetsInputs != null)
@@ -79,11 +96,14 @@ public class UIInputController : MonoBehaviour
             starterAssetsInputs.move = Vector2.zero;
             starterAssetsInputs.jump = false;
             starterAssetsInputs.sprint = false;
+            
+            // Also disable the cursor input for look
+            starterAssetsInputs.cursorInputForLook = false;
         }
         
         if (firstPersonController != null)
         {
-            // Optionally disable the controller completely
+            // Disable the controller completely
             firstPersonController.enabled = false;
         }
         
