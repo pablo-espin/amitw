@@ -7,11 +7,16 @@ public class WebGLManager : MonoBehaviour
 
     void Start()
     {
+        Debug.Log("WebGLManager starting...");
+        
         #if UNITY_WEBGL && !UNITY_EDITOR
             // Set initial cursor state
             if (autoLockCursor)
             {
-                LockCursor();
+                // Don't lock immediately in WebGL - wait for user interaction
+                isLocked = false;
+                Cursor.lockState = CursorLockMode.None;
+                Debug.Log("Initial cursor state set to None for WebGL");
             }
         #endif
     }
@@ -35,12 +40,19 @@ public class WebGLManager : MonoBehaviour
 
     private void LockCursor()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        isLocked = true;
+        Debug.Log("Attempting to lock cursor");
+        try {
+            Cursor.lockState = CursorLockMode.Locked;
+            isLocked = true;
+            Debug.Log("Cursor locked successfully");
+        } catch (System.Exception e) {
+            Debug.LogError("Failed to lock cursor: " + e.Message);
+        }
     }
 
     private void UnlockCursor()
     {
+        Debug.Log("Unlocking cursor");
         Cursor.lockState = CursorLockMode.None;
         isLocked = false;
     }

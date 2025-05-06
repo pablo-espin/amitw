@@ -28,6 +28,11 @@ public class HomeScreenController : MonoBehaviour
 
     public void OnStartButtonClicked()
     {
+        // First, allow the click to happen (cursor is still visible)
+        // Then lock the cursor when game actually starts
+        
+        // Remove any previous calls to CursorManager here
+        
         GameManager.Instance.StartGame();
     }
 }

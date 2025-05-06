@@ -102,6 +102,14 @@ public class PlayerInteractionManager : MonoBehaviour
                 ShowInteractionPrompt(keyCardObject.GetInteractionPrompt());
                 return;
             }
+
+            // Check for door interactable
+            DoorInteractable doorObject = hit.collider.GetComponent<DoorInteractable>();
+            if (doorObject != null)
+            {
+                ShowInteractionPrompt(doorObject.GetInteractionPrompt());
+                return;
+            }
             
             // If no valid interactable found, hide prompt
             HideInteractionPrompt();
@@ -173,6 +181,14 @@ public class PlayerInteractionManager : MonoBehaviour
             if (keyCardObject != null)
             {
                 keyCardObject.Interact();
+                return;
+            }
+
+            // Check for door interactable
+            DoorInteractable doorObject = hit.collider.GetComponent<DoorInteractable>();
+            if (doorObject != null)
+            {
+                doorObject.Interact();
                 return;
             }
         }

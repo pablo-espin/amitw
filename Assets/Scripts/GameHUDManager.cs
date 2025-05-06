@@ -162,8 +162,13 @@ public class GameHUDManager : MonoBehaviour
         }
 
         // Ensure cursor is visible and unlocked when panel is open
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        // Cursor.lockState = CursorLockMode.None;
+        // Cursor.visible = true;
+        // Use CursorManager instead
+        if (CursorManager.Instance != null)
+        {
+            CursorManager.Instance.RequestCursorUnlock("DecryptionPanel");
+        }
         
         // Disable player movement
         if (interactionManager != null)
@@ -186,8 +191,14 @@ public class GameHUDManager : MonoBehaviour
         }
 
         // Restore cursor state
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // Cursor.lockState = CursorLockMode.Locked;
+        // Cursor.visible = false;
+
+        // Use CursorManager instead
+        if (CursorManager.Instance != null)
+        {
+            CursorManager.Instance.RequestCursorLock("DecryptionPanel");
+        }
         
         // Re-enable player movement
         if (interactionManager != null)
@@ -502,8 +513,14 @@ public class GameHUDManager : MonoBehaviour
         }
 
         // Unlock cursor for UI interaction
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        // Cursor.lockState = CursorLockMode.None;
+        // Cursor.visible = true;
+
+        // Use CursorManager instead
+        if (CursorManager.Instance != null)
+        {
+            CursorManager.Instance.RequestCursorUnlock("OutcomePanel");
+        }
         
         // Disable player movement
         if (interactionManager != null)

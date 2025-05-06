@@ -39,6 +39,12 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
+        // Lock cursor when game actually starts loading
+        if (CursorManager.Instance != null)
+        {
+            CursorManager.Instance.ForceLockCursor();
+        }
+        
         // Change to cutscene state instead of directly to gameplay
         ChangeState(GameState.IntroCutscene);
         SceneManager.LoadScene("IntroCutscene");
