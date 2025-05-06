@@ -86,9 +86,15 @@ public class LocationClueSystem : MonoBehaviour
             }
             
             // Unlock cursor for UI interaction
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            // Cursor.lockState = CursorLockMode.None;
+            // Cursor.visible = true;
             
+            // Use CursorManager instead
+            // if (CursorManager.Instance != null)
+            // {
+            //     CursorManager.Instance.RequestCursorUnlock("LocationClueSystem");
+            // }
+
             if (uiInputController != null)
             {
                 uiInputController.DisableGameplayInput();
@@ -125,8 +131,14 @@ public class LocationClueSystem : MonoBehaviour
             }
             
             // Unlock cursor for UI interaction
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            // Cursor.lockState = CursorLockMode.None;
+            // Cursor.visible = true;
+
+            // Use CursorManager instead
+            // if (CursorManager.Instance != null)
+            // {
+            //     CursorManager.Instance.RequestCursorUnlock("LocationClueSystem");
+            // }
 
             // Disable player input
             if (uiInputController != null)
@@ -154,8 +166,14 @@ public class LocationClueSystem : MonoBehaviour
         }
         
         // Re-lock cursor for gameplay
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // Cursor.lockState = CursorLockMode.Locked;
+        // Cursor.visible = false;
+
+        // Use CursorManager instead
+        // if (CursorManager.Instance != null)
+        // {
+        //     CursorManager.Instance.RequestCursorLock("LocationClueSystem");
+        // }
 
         // Enable player input
         if (uiInputController != null)

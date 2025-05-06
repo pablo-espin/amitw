@@ -106,6 +106,12 @@ public class SimpleCutscenePlayer : MonoBehaviour
 
     private void Start()
     {
+        // Force lock cursor using CursorManager
+        if (CursorManager.Instance != null)
+        {
+            CursorManager.Instance.ForceLockCursor();
+        }
+
         // Setup audio sources if needed
         if (musicSource == null)
         {

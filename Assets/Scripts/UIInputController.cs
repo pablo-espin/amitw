@@ -54,8 +54,14 @@ public class UIInputController : MonoBehaviour
         }
         
         // Lock cursor for gameplay
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // Cursor.lockState = CursorLockMode.Locked;
+        // Cursor.visible = false;
+
+        // Use CursorManager instead
+        if (CursorManager.Instance != null)
+        {
+            CursorManager.Instance.RequestCursorLock("UIInputController");
+        }
     }
     
     public void DisableGameplayInput()
@@ -63,7 +69,7 @@ public class UIInputController : MonoBehaviour
         if (playerInput != null)
         {
             // Switch to UI controls or disable current map
-            playerInput.SwitchCurrentActionMap("UI"); // Create this action map or use ""
+            playerInput.SwitchCurrentActionMap(""); // Create this action map or use ""
         }
         
         if (starterAssetsInputs != null)
@@ -82,7 +88,13 @@ public class UIInputController : MonoBehaviour
         }
         
         // Unlock cursor for UI
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        // Cursor.lockState = CursorLockMode.None;
+        // Cursor.visible = true;
+
+        // Use CursorManager instead
+        if (CursorManager.Instance != null)
+        {
+            CursorManager.Instance.RequestCursorUnlock("UIInputController");
+        }
     }
 }

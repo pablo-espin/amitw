@@ -109,8 +109,14 @@ public class FalseClueSystem : MonoBehaviour
                 interactionManager.SetInteractionEnabled(false);
                 
             // Unlock the cursor for UI interaction
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            // Cursor.lockState = CursorLockMode.None;
+            // Cursor.visible = true;
+
+            // Use CursorManager instead
+            // if (CursorManager.Instance != null)
+            // {
+            //     CursorManager.Instance.RequestCursorUnlock("FalseClueSystem");
+            // }
 
         }
 
@@ -132,8 +138,14 @@ public class FalseClueSystem : MonoBehaviour
             interactionManager.SetInteractionEnabled(true);
             
         // Re-lock the cursor for gameplay
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // Cursor.lockState = CursorLockMode.Locked;
+        // Cursor.visible = false;
+
+        // Use CursorManager instead
+        //if (CursorManager.Instance != null)
+        //{
+        //    CursorManager.Instance.RequestCursorLock("FalseClueSystem");
+        //}
 
         // Enable player input
         if (uiInputController != null)

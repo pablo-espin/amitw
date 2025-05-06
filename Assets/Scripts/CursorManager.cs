@@ -14,21 +14,20 @@ public class CursorManager : MonoBehaviour
     
     private void Awake()
     {
-        // Singleton setup
-        if (Instance == null)
+        // Improved singleton setup
+        if (Instance != null && Instance != this)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
+            Debug.Log("Duplicate CursorManager found, destroying this one.");
             Destroy(gameObject);
             return;
         }
-
+        
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+        
         // Initially unlock cursor for home screen
         RequestCursorUnlock("HomeScreen");
-
+        
         // Initial cursor state
         UpdateCursorState();
     }
@@ -81,5 +80,5 @@ public class CursorManager : MonoBehaviour
         string[] requesters = new string[unlockRequesters.Count];
         unlockRequesters.CopyTo(requesters);
         return requesters;
-    }
+    }    
 }

@@ -164,8 +164,14 @@ public class PauseMenuManager : MonoBehaviour
     private void DisableGameplay()
     {
         // Unlock cursor for UI
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        // Cursor.lockState = CursorLockMode.None;
+        // Cursor.visible = true;
+
+        // Use CursorManager instead
+        // if (CursorManager.Instance != null)
+        // {
+        //     CursorManager.Instance.RequestCursorUnlock("PauseMenu");
+        // }
 
         // Disable player interaction/movement
         PlayerInteractionManager interactionManager = FindObjectOfType<PlayerInteractionManager>();
@@ -180,8 +186,14 @@ public class PauseMenuManager : MonoBehaviour
     private void EnableGameplay()
     {
         // Lock cursor for gameplay
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // Cursor.lockState = CursorLockMode.Locked;
+        // Cursor.visible = false;
+
+        // Use CursorManager instead
+        // if (CursorManager.Instance != null)
+        // {
+        //     CursorManager.Instance.RequestCursorLock("PauseMenu");
+        // }
 
         // Enable player interaction/movement
         PlayerInteractionManager interactionManager = FindObjectOfType<PlayerInteractionManager>();
@@ -251,6 +263,12 @@ public class PauseMenuManager : MonoBehaviour
     {
         // Resume time scale before reloading
         Time.timeScale = 1f;
+
+        // Reset cursor state before scene reload
+        if (CursorManager.Instance != null)
+        {
+            CursorManager.Instance.ForceLockCursor();
+        }        
         
         // Reload the current scene
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);

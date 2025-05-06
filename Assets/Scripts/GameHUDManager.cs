@@ -165,10 +165,10 @@ public class GameHUDManager : MonoBehaviour
         // Cursor.lockState = CursorLockMode.None;
         // Cursor.visible = true;
         // Use CursorManager instead
-        if (CursorManager.Instance != null)
-        {
-            CursorManager.Instance.RequestCursorUnlock("DecryptionPanel");
-        }
+        // if (CursorManager.Instance != null)
+        // {
+        //     CursorManager.Instance.RequestCursorUnlock("DecryptionPanel");
+        // }
         
         // Disable player movement
         if (interactionManager != null)
@@ -195,10 +195,10 @@ public class GameHUDManager : MonoBehaviour
         // Cursor.visible = false;
 
         // Use CursorManager instead
-        if (CursorManager.Instance != null)
-        {
-            CursorManager.Instance.RequestCursorLock("DecryptionPanel");
-        }
+        // if (CursorManager.Instance != null)
+        // {
+        //     CursorManager.Instance.RequestCursorLock("DecryptionPanel");
+        // }
         
         // Re-enable player movement
         if (interactionManager != null)
@@ -517,10 +517,10 @@ public class GameHUDManager : MonoBehaviour
         // Cursor.visible = true;
 
         // Use CursorManager instead
-        if (CursorManager.Instance != null)
-        {
-            CursorManager.Instance.RequestCursorUnlock("OutcomePanel");
-        }
+        // if (CursorManager.Instance != null)
+        // {
+        //     CursorManager.Instance.RequestCursorUnlock("OutcomePanel");
+        // }
         
         // Disable player movement
         if (interactionManager != null)
