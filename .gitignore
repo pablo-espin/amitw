@@ -45,3 +45,6 @@ crashlytics-build.properties
 
 # Lightmaps
 *exr
+
+# Executables
+*.exe
