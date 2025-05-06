@@ -43,6 +43,9 @@ public class InteractionSoundManager : MonoBehaviour
     [SerializeField] private InteractionSoundCategory keyCardAccepted;
     [SerializeField] private InteractionSoundCategory doorOpen;
 
+    [Header("Loung Door Sounds")]
+    [SerializeField] private InteractionSoundCategory loungeDoorOpen;
+
 
     [Header("Settings")]
     [SerializeField] private int audioSourcePoolSize = 5;
@@ -345,6 +348,12 @@ public class InteractionSoundManager : MonoBehaviour
     public void PlayDoorOpen()
     {
         PlaySound(doorOpen);
+    }
+
+    // Door sounds
+    public void PlayLoungeDoorOpen()
+    {
+        PlaySound(loungeDoorOpen);
     }
 
     public AudioSource StartMatrixAnimation()

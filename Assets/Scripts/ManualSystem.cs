@@ -103,8 +103,14 @@ public class ManualSystem : MonoBehaviour
             interactionManager.SetInteractionEnabled(false);
         
         // Unlock cursor for UI interaction
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        //Cursor.lockState = CursorLockMode.None;
+        //Cursor.visible = true;
+
+        // Use CursorManager instead
+        // if (CursorManager.Instance != null)
+        // {
+        //     CursorManager.Instance.RequestCursorUnlock("ManualSystem");
+        // }
 
         // Disable player input
         if (uiInputController != null)
@@ -141,8 +147,14 @@ public class ManualSystem : MonoBehaviour
             interactionManager.SetInteractionEnabled(false);
         
         // Unlock cursor for UI interaction
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        // Cursor.lockState = CursorLockMode.None;
+        // Cursor.visible = true;
+
+        // Use CursorManager instead
+        // if (CursorManager.Instance != null)
+        // {
+        //     CursorManager.Instance.RequestCursorUnlock("ManualSystem");
+        // }
 
         // Disable player input
         if (uiInputController != null)
@@ -160,8 +172,14 @@ public class ManualSystem : MonoBehaviour
             interactionManager.SetInteractionEnabled(true);
         
         // Re-lock cursor for gameplay
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // Cursor.lockState = CursorLockMode.Locked;
+        // Cursor.visible = false;
+
+        // Use CursorManager instead
+        // if (CursorManager.Instance != null)
+        // {
+        //     CursorManager.Instance.RequestCursorLock("ManualSystem");
+        // }
 
         // Enable player input
         if (uiInputController != null)
