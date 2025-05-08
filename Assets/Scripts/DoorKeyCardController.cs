@@ -12,8 +12,11 @@ public class DoorKeyCardController : MonoBehaviour
     [SerializeField] private KeyCardAccessManager keyCardManager;
     [SerializeField] private BoxCollider doorCollider;
     [SerializeField] private MeshRenderer keyCardLightRenderer; // The light indicator on key card panel
+
+    [Header("Materials")]
     [SerializeField] private Material redMaterial; // Red emissive material
     [SerializeField] private Material greenMaterial; // Green emissive material
+    [SerializeField] private Material blackMaterial; // Black material for when the key card lock flashes    
     
     [Header("Audio")]
     [SerializeField] private AudioSource doorAudioSource;
@@ -63,19 +66,19 @@ public class DoorKeyCardController : MonoBehaviour
         float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
         isInRange = distanceToPlayer <= interactionDistance;
 
-        if (isInRange && Input.GetKeyDown(KeyCode.E) && !isOpen)
-        {
-            TryOpenDoor();
+        // if (isInRange && Input.GetKeyDown(KeyCode.E) && !isOpen)
+        // {
+        //     TryOpenDoor();
             
-            // Trigger narration about needing a key card if:
-            // 1. Player doesn't have a key card
-            // 2. We haven't triggered this narration before
-            // 3. Narration is enabled
-            if (keyCardManager != null && !keyCardManager.HasKeyCard() && !hasTriggeredNoKeyCardDialogue && useNarration)
-            {
-                TriggerNoKeyCardNarration();
-            }
-        }
+        //     // Trigger narration about needing a key card if:
+        //     // 1. Player doesn't have a key card
+        //     // 2. We haven't triggered this narration before
+        //     // 3. Narration is enabled
+        //     if (keyCardManager != null && !keyCardManager.HasKeyCard() && !hasTriggeredNoKeyCardDialogue && useNarration)
+        //     {
+        //         TriggerNoKeyCardNarration();
+        //     }
+        // }
 
         if (isOpen)
         {
@@ -85,7 +88,7 @@ public class DoorKeyCardController : MonoBehaviour
         }
     }
     
-    private void TryOpenDoor()
+    public void TryOpenDoor()
     {
         if (keyCardManager == null)
             return;
@@ -128,6 +131,12 @@ public class DoorKeyCardController : MonoBehaviour
             {
                 StartCoroutine(FlashRedLight());
             }
+
+            // Moved from Update: Trigger narration about needing a key card
+            if (useNarration && !hasTriggeredNoKeyCardDialogue)
+            {
+                TriggerNoKeyCardNarration();
+            }
         }
     }
     
@@ -152,25 +161,41 @@ public class DoorKeyCardController : MonoBehaviour
     
     private IEnumerator FlashRedLight()
     {
+        Debug.Log("Starting flash sequence");
+        
         // Store original material
         Material originalMaterial = keyCardLightRenderer.material;
+        Debug.Log("Original material: " + originalMaterial.name);
         
-        // Flash off
-        keyCardLightRenderer.material = null;
+        // Flash to black
+        Debug.Log("Setting to black material 1");
+        keyCardLightRenderer.material = blackMaterial;
+        keyCardLightRenderer.enabled = true; // Ensure renderer is enabled
+        
         yield return new WaitForSeconds(0.1f);
         
-        // Flash on
+        // Flash to red
+        Debug.Log("Setting back to red material 2");
         keyCardLightRenderer.material = originalMaterial;
+        keyCardLightRenderer.enabled = true;
+        
         yield return new WaitForSeconds(0.1f);
         
-        // Flash off
-        keyCardLightRenderer.material = null;
+        // Flash to black again
+        Debug.Log("Setting to black material again 3");
+        keyCardLightRenderer.material = blackMaterial;
+        keyCardLightRenderer.enabled = true;
+        
         yield return new WaitForSeconds(0.1f);
         
-        // Back to original
+        // Back to original red
+        Debug.Log("Final setting back to red material 4");
         keyCardLightRenderer.material = originalMaterial;
+        keyCardLightRenderer.enabled = true;
+        
+        Debug.Log("Flash sequence complete");
     }
-    
+
     private void TriggerNoKeyCardNarration()
     {
         hasTriggeredNoKeyCardDialogue = true;
