@@ -101,6 +101,12 @@ public class FalseClueSystem : MonoBehaviour
         {
             computerScreen.SetActive(true);
             
+            // Register with UI state manager
+            if (UIStateManager.Instance != null)
+            {
+                UIStateManager.Instance.RegisterOpenUI("ComputerScreen");
+            }
+
             // By default, show cat video tab
             SwitchTab(false);
             
@@ -131,12 +137,21 @@ public class FalseClueSystem : MonoBehaviour
     {
         // Hide the computer screen
         if (computerScreen != null)
+        {
             computerScreen.SetActive(false);
-            
+
+            // Unregister with UI state manager
+            if (UIStateManager.Instance != null)
+            {
+                UIStateManager.Instance.RegisterClosedUI("ComputerScreen");
+            }        
+        }
+
         // Re-enable player interaction
         if (interactionManager != null)
+        {
             interactionManager.SetInteractionEnabled(true);
-            
+        }    
         // Re-lock the cursor for gameplay
         // Cursor.lockState = CursorLockMode.Locked;
         // Cursor.visible = false;

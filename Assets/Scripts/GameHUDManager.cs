@@ -154,6 +154,12 @@ public class GameHUDManager : MonoBehaviour
         {
             decryptionPanel.SetActive(true);
             
+            // Register with UI state manager
+            if (UIStateManager.Instance != null)
+            {
+                UIStateManager.Instance.RegisterOpenUI("DecryptionPanel");
+            }
+
             if (decryptionInput != null)
             {
                 decryptionInput.text = "";
@@ -188,6 +194,12 @@ public class GameHUDManager : MonoBehaviour
         if (decryptionPanel != null)
         {
             decryptionPanel.SetActive(false);
+
+            // Unregister with UI state manager
+            if (UIStateManager.Instance != null)
+            {
+                UIStateManager.Instance.RegisterClosedUI("DecryptionPanel");
+            }
         }
 
         // Restore cursor state
@@ -452,6 +464,12 @@ public class GameHUDManager : MonoBehaviour
         if (decryptionPanel != null)
         {
             decryptionPanel.SetActive(false);
+
+            // Make sure to unregister decryption panel if it was open
+            if (UIStateManager.Instance != null)
+            {
+                UIStateManager.Instance.RegisterClosedUI("DecryptionPanel");
+            }            
         }
         
         // Decrypt memory sphere
@@ -472,6 +490,12 @@ public class GameHUDManager : MonoBehaviour
         if (decryptionPanel != null)
         {
             decryptionPanel.SetActive(false);
+
+            // Make sure to unregister decryption panel if it was open
+            if (UIStateManager.Instance != null)
+            {
+                UIStateManager.Instance.RegisterClosedUI("DecryptionPanel");
+            }            
         }
         
         // Corrupt memory sphere
@@ -496,6 +520,12 @@ public class GameHUDManager : MonoBehaviour
         {
             outcomePanel.SetActive(true);
             
+            // Register with UI state manager
+            if (UIStateManager.Instance != null)
+            {
+                UIStateManager.Instance.RegisterOpenUI("OutcomePanel");
+            }
+
             if (outcomeTitle != null)
             {
                 outcomeTitle.text = title;

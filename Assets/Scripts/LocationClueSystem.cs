@@ -76,6 +76,12 @@ public class LocationClueSystem : MonoBehaviour
             documentTitleText.text = locationListTitle;
             documentViewPanel.SetActive(true);
             
+            // Register with UI state manager
+            if (UIStateManager.Instance != null)
+            {
+                UIStateManager.Instance.RegisterOpenUI("LocationDocument");
+            }
+
             // Track that this document was examined
             locationListExamined = true;
             
@@ -120,6 +126,12 @@ public class LocationClueSystem : MonoBehaviour
             documentTitleText.text = transportCardTitle;
             documentViewPanel.SetActive(true);
             
+            // Register with UI state manager
+            if (UIStateManager.Instance != null)
+            {
+                UIStateManager.Instance.RegisterOpenUI("LocationDocument");
+            }
+
             // Track that this document was examined
             transportCardExamined = true;
 
@@ -157,6 +169,12 @@ public class LocationClueSystem : MonoBehaviour
         if (documentViewPanel != null)
         {
             documentViewPanel.SetActive(false);
+
+            // Unregister with UI state manager
+            if (UIStateManager.Instance != null)
+            {
+                UIStateManager.Instance.RegisterClosedUI("LocationDocument");
+            }
         }
 
         // Re-enable player interaction

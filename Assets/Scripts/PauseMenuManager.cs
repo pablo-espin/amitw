@@ -87,19 +87,36 @@ public class PauseMenuManager : MonoBehaviour
         }
     }
 
+    // private void Update()
+    // {
+    //     // Check for pause key press (P key)
+    //     if (Input.GetKeyDown(KeyCode.P))
+    //     {
+    //         TogglePause();
+    //     }
+
+    //     // Also allow ESC to close pause menu if it's open
+    //     // if (isPaused && Input.GetKeyDown(KeyCode.Escape))
+    //     // {
+    //     //     ResumeGame();
+    //     // }
+    // }
+
     private void Update()
     {
         // Check for pause key press (P key)
         if (Input.GetKeyDown(KeyCode.P))
         {
+            // Only toggle pause if no other UI is open
+            if (!isPaused && UIStateManager.Instance != null && UIStateManager.Instance.IsAnyUIOpen)
+            {
+                // Don't pause if another UI is open
+                Debug.Log("Pause key pressed, but another UI is open. Ignoring.");
+                return;
+            }
+            
             TogglePause();
         }
-
-        // Also allow ESC to close pause menu if it's open
-        // if (isPaused && Input.GetKeyDown(KeyCode.Escape))
-        // {
-        //     ResumeGame();
-        // }
     }
 
     public void TogglePause()
@@ -119,7 +136,7 @@ public class PauseMenuManager : MonoBehaviour
         if (isPaused)
             return;
 
-        // Store time scale before pausing (in case it was already modified)
+        // Store time scale before pausing
         timeScaleBeforePause = Time.timeScale;
 
         // Pause the game
@@ -133,8 +150,14 @@ public class PauseMenuManager : MonoBehaviour
         // Disable player input and show cursor
         DisableGameplay();
 
-        // Pause audio (optional)
+        // Pause audio
         PauseAudio();
+        
+        // Register with UI state manager
+        if (UIStateManager.Instance != null)
+        {
+            UIStateManager.Instance.RegisterOpenUI("PauseMenu");
+        }
 
         Debug.Log("Game paused");
     }
@@ -155,8 +178,14 @@ public class PauseMenuManager : MonoBehaviour
         // Re-enable player input and hide cursor
         EnableGameplay();
 
-        // Resume audio (optional)
+        // Resume audio
         ResumeAudio();
+        
+        // Unregister with UI state manager
+        if (UIStateManager.Instance != null)
+        {
+            UIStateManager.Instance.RegisterClosedUI("PauseMenu");
+        }
 
         Debug.Log("Game resumed");
     }

@@ -62,11 +62,30 @@ public class ManualSystem : MonoBehaviour
         UpdatePageDisplay();
     }
     
+    // void Update()
+    // {
+    //     // Check for M key press to open manual directly to map page
+    //     if (manualFound && Input.GetKeyDown(KeyCode.M))
+    //     {
+    //         ShowMap();
+    //     }
+        
+    //     // Update player marker position on the map if visible
+    //     UpdatePlayerMarker();
+    // }
     void Update()
     {
         // Check for M key press to open manual directly to map page
         if (manualFound && Input.GetKeyDown(KeyCode.M))
         {
+            // Only show map if no other UI is open
+            if (UIStateManager.Instance != null && UIStateManager.Instance.IsAnyUIOpen)
+            {
+                // Don't show map if another UI is open
+                Debug.Log("Map key pressed, but another UI is open. Ignoring.");
+                return;
+            }
+            
             ShowMap();
         }
         
@@ -122,6 +141,12 @@ public class ManualSystem : MonoBehaviour
     {
         if (!manualFound)
             return;
+
+        // Register with UI state manager
+        if (UIStateManager.Instance != null)
+        {
+            UIStateManager.Instance.RegisterOpenUI("Manual");
+        }    
             
         if (manualPanel != null)
         {
@@ -166,7 +191,13 @@ public class ManualSystem : MonoBehaviour
     {        
         if (manualPanel != null)
             manualPanel.SetActive(false);
-            
+
+        // Unregister with UI state manager
+        if (UIStateManager.Instance != null)
+        {
+            UIStateManager.Instance.RegisterClosedUI("Manual");
+        }
+
         // Re-enable player interaction
         if (interactionManager != null)
             interactionManager.SetInteractionEnabled(true);
