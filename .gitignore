@@ -48,3 +48,7 @@ crashlytics-build.properties
 
 # Executables
 *.exe
+*.zip
+
+# Build folder
+AMITW Win 060525/
