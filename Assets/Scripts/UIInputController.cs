@@ -32,6 +32,9 @@ public class UIInputController : MonoBehaviour
     
     public void EnableGameplayInput()
     {
+        // Set the static flag to block camera movement
+        StarterAssets.FirstPersonController.UIIsOpen = false;
+
         if (playerInput != null)
         {
             // First re-enable input system
@@ -80,6 +83,9 @@ public class UIInputController : MonoBehaviour
     
     public void DisableGameplayInput()
     {
+        // Set the static flag to block camera movement
+        StarterAssets.FirstPersonController.UIIsOpen = true;
+
         if (playerInput != null)
         {
             // Completely disable input system's processing of player input

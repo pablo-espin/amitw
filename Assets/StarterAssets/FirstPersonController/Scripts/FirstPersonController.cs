@@ -64,6 +64,10 @@ namespace StarterAssets
 		private float _jumpTimeoutDelta;
 		private float _fallTimeoutDelta;
 
+		// Added public class to direclty lock movmeent from here.
+		// This is a fix to the UIInputController not working properly in the build
+		public static bool UIIsOpen = false;
+
 	
 #if ENABLE_INPUT_SYSTEM
 		private PlayerInput _playerInput;
@@ -112,6 +116,10 @@ namespace StarterAssets
 
 		private void Update()
 		{
+			// Skip all input porcessing if UI is open
+			if (UIIsOpen)
+				return;
+
 			JumpAndGravity();
 			GroundedCheck();
 			Move();
@@ -119,6 +127,10 @@ namespace StarterAssets
 
 		private void LateUpdate()
 		{
+			// Skip camera rotation if a UI is open
+    		if (UIIsOpen)
+        	return;
+
 			CameraRotation();
 		}
 
