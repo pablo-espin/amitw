@@ -52,8 +52,9 @@ public class NarratorManager : MonoBehaviour
     /// <param name="dialogueID">Unique identifier for this line (to prevent repetition)</param>
     /// <param name="forcePlay">Whether to play regardless of cooldown/repetition</param>
     /// <param name="volume">Volume to play at (defaults to defaultVolume)</param>
+    /// <param name="delay">Delay before playing the audio (in seconds)</param>
     /// <returns>True if played, false otherwise</returns>
-    public bool PlayDialogue(AudioClip clip, string dialogueID, bool forcePlay = false, float volume = -1f)
+    public bool PlayDialogue(AudioClip clip, string dialogueID, bool forcePlay = false, float volume = -1f, float delay = 0f)
     {
         // Check if we can play this dialogue
         if (!forcePlay)
@@ -75,6 +76,13 @@ public class NarratorManager : MonoBehaviour
             }
         }
         
+        // If delay is specified, use coroutine
+        if (delay > 0f)
+        {
+            StartCoroutine(PlayDialogueWithDelay(clip, dialogueID, volume, delay));
+            return true;
+        }
+        
         // If something is already playing, fade it out
         if (narratorSource.isPlaying && fadeCoroutine == null)
         {
@@ -84,6 +92,32 @@ public class NarratorManager : MonoBehaviour
         
         // Play the clip directly
         return PlayClipDirectly(clip, dialogueID, volume);
+    }
+    
+    private IEnumerator PlayDialogueWithDelay(AudioClip clip, string dialogueID, float volume, float delay)
+    {
+        if (showDebugInfo)
+            Debug.Log($"Narrator: Waiting {delay} seconds before playing {dialogueID}");
+            
+        yield return new WaitForSeconds(delay);
+        
+        // Re-check conditions after delay (in case something changed)
+        if (!string.IsNullOrEmpty(dialogueID) && playedDialogueIDs.Contains(dialogueID))
+        {
+            if (showDebugInfo)
+                Debug.Log($"Narrator: {dialogueID} already played during delay period");
+            yield break;
+        }
+        
+        // If something is already playing, fade it out
+        if (narratorSource.isPlaying && fadeCoroutine == null)
+        {
+            fadeCoroutine = StartCoroutine(FadeOutAndPlay(clip, dialogueID, volume));
+        }
+        else
+        {
+            PlayClipDirectly(clip, dialogueID, volume);
+        }
     }
     
     private bool PlayClipDirectly(AudioClip clip, string dialogueID, float volume = -1f)

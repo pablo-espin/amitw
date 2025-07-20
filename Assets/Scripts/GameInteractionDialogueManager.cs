@@ -47,7 +47,7 @@ public class GameInteractionDialogueManager : MonoBehaviour
     public void OnMemorySphereFirstInteraction()
     {
         if (interactionDialogue != null)
-            interactionDialogue.TriggerInteractionDialogue("do_as_i_say");
+            interactionDialogue.TriggerInteractionDialogue("Clue");
     }
     
     // Water tap interaction - "Sink no water"

@@ -10,8 +10,11 @@ public class ElectricityClueSystem : MonoBehaviour
     [Header("Cable Components")]
     [SerializeField] private Transform cableEnd;
     [SerializeField] private Transform connectionPoint;
-    [SerializeField] private Animator cableAnimator;
-    [SerializeField] private string connectAnimationTrigger = "Connect";
+    [SerializeField] private float cableAnimationSpeed = 2f;
+    [SerializeField] private AnimationCurve cableMovementCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    
+    [Header("Spark Effect")]
+    [SerializeField] private ParticleSystem sparkEffect; // Spark particle system
         
     [Header("Server Rack Components")]
     [SerializeField] private Light[] serverLights;
@@ -28,6 +31,13 @@ public class ElectricityClueSystem : MonoBehaviour
     [SerializeField] private Material emissiveMaterial;
     [SerializeField] private ClueProgressUI clueProgressUI;
 
+    // Cable animation positions (set from inspector or code)
+    [Header("Cable Animation Settings")]
+    [SerializeField] private bool useLocalCoordinates = true;
+    [SerializeField] private Vector3 cableStartPosition = new Vector3(0.4295037f, -18.81537f, -14.72518f);
+    [SerializeField] private Vector3 cableEndPosition = new Vector3(0.159f, -18.5294f, -14.8485f);
+    [SerializeField] private Vector3 cableRotation = new Vector3(-89.98f, 90f, 0f);
+    [SerializeField] private Vector3 cableScale = new Vector3(100f, 119.91f, 96.08f);
 
     // References for interaction
     private PlayerInteractionManager interactionManager;
@@ -46,16 +56,54 @@ public class ElectricityClueSystem : MonoBehaviour
         
         // Hide clue text
         if (clueTextObject) clueTextObject.SetActive(false);
+        
+        // Setup spark effect
+        if (sparkEffect != null)
+        {
+            // Make sure sparks don't play automatically
+            sparkEffect.Stop();
+            sparkEffect.Clear();
+            Debug.Log("Spark effect initialized and stopped");
+        }
+        else
+        {
+            Debug.LogWarning("Spark effect not assigned! Create a Particle System and assign it for cable connection sparks.");
+        }
+        
+        // IMPORTANT: Only set cable position if it's not already at the starting position
+        // This prevents triggering any existing Animator components
+        if (cableEnd != null)
+        {
+            // Check if cable is already at or near the starting position
+            float distanceFromStart = Vector3.Distance(cableEnd.position, cableStartPosition);
+            
+            if (distanceFromStart > 0.1f) // Only move if it's not already there
+            {
+                Debug.Log($"Cable is {distanceFromStart} units from start position, moving to start");
+                cableEnd.position = cableStartPosition;
+                cableEnd.rotation = Quaternion.Euler(cableRotation);
+                cableEnd.localScale = cableScale;
+            }
+            else
+            {
+                Debug.Log($"Cable already at starting position (distance: {distanceFromStart})");
+            }
+            
+        }
+        else
+        {
+            Debug.LogError("CableEnd transform not assigned!");
+        }
     }
     
     // Call this when player interacts with the cable
     public void InteractWithCable()
     {
-        Debug.Log("Cable interaction triggered");
+        Debug.Log($"Cable interaction triggered. Current state - Connected: {cableConnected}");
         
         if (!cableConnected)
         {
-            Debug.Log("Connecting cable");
+            Debug.Log("Connecting cable - starting animation");
 
             // Play cable connection sound
             if (InteractionSoundManager.Instance != null)
@@ -63,41 +111,113 @@ public class ElectricityClueSystem : MonoBehaviour
                 InteractionSoundManager.Instance.PlayCableConnection();
             }
 
-            // Trigger the animation
-            if (cableAnimator != null)
-            {
-                cableAnimator.SetTrigger(connectAnimationTrigger);
-                // Wait for animation to finish before powering on
-                StartCoroutine(WaitForAnimationAndPowerOn());
-            }
-            else
-            {
-                // Fallback if animator is missing
-                cableConnected = true;
-                PowerOn();
-            }
+            // Start the cable animation
+            StartCoroutine(AnimateCableConnection());
+        }
+        else
+        {
+            Debug.Log("Cable already connected - no animation needed");
         }
     }
 
-    private IEnumerator WaitForAnimationAndPowerOn() 
+    private IEnumerator AnimateCableConnection() 
     {
+        if (cableEnd == null)
+        {
+            Debug.LogError("CableEnd is null - cannot animate!");
+            yield break;
+        }
+        
         // Temporarily disable player interaction during animation
-        if (interactionManager != null) interactionManager.SetInteractionEnabled(false);
+        if (interactionManager != null) 
+            interactionManager.SetInteractionEnabled(false);
         
-        // Wait for animation to finish
-        AnimatorStateInfo info = cableAnimator.GetCurrentAnimatorStateInfo(0);
-        yield return new WaitForSeconds(info.length + 0.1f); // Add a small buffer
+        Debug.Log($"Starting cable animation from {cableStartPosition} to {cableEndPosition}");
         
-        // Disable animator to prevent further changes
-        cableAnimator.enabled = false;
-                
+        float animationDuration = 1f / cableAnimationSpeed;
+        float elapsed = 0f;
+        
+        // Store starting position based on coordinate system
+        Vector3 startPos = useLocalCoordinates ? cableEnd.localPosition : cableEnd.position;
+        Vector3 targetPos = useLocalCoordinates ? cableEndPosition : cableEndPosition;
+        
+        while (elapsed < animationDuration)
+        {
+            elapsed += Time.deltaTime;
+            float normalizedTime = elapsed / animationDuration;
+            
+            // Use animation curve for smooth movement
+            float curveValue = cableMovementCurve.Evaluate(normalizedTime);
+            
+            // Interpolate position using the curve
+            Vector3 currentPosition = Vector3.Lerp(startPos, targetPos, curveValue);
+            
+            if (useLocalCoordinates)
+            {
+                cableEnd.localPosition = currentPosition;
+                cableEnd.localRotation = Quaternion.Euler(cableRotation);
+            }
+            else
+            {
+                cableEnd.position = currentPosition;
+                cableEnd.rotation = Quaternion.Euler(cableRotation);
+            }
+            
+            cableEnd.localScale = cableScale;
+            
+            yield return null;
+        }
+        
+        // Ensure final position is exactly the target
+        if (useLocalCoordinates)
+        {
+            cableEnd.localPosition = cableEndPosition;
+            cableEnd.localRotation = Quaternion.Euler(cableRotation);
+        }
+        else
+        {
+            cableEnd.position = cableEndPosition;
+            cableEnd.rotation = Quaternion.Euler(cableRotation);
+        }
+        
+        cableEnd.localScale = cableScale;
+        
+        Debug.Log($"Cable animation complete. Final position: {(useLocalCoordinates ? cableEnd.localPosition : cableEnd.position)}");
+        
+        // Trigger spark effect when cable connects
+        TriggerSparkEffect();
+        
         // Re-enable player interaction
-        if (interactionManager != null) interactionManager.SetInteractionEnabled(true);
+        if (interactionManager != null) 
+            interactionManager.SetInteractionEnabled(true);
         
         // Cable is now connected
         cableConnected = true;
         
-        // Power on
+        // Power on (with a slight delay to let sparks show)
+        StartCoroutine(PowerOnAfterSparks());
+    }
+    
+    private void TriggerSparkEffect()
+    {
+        if (sparkEffect != null)
+        {            
+            // Play the spark effect
+            sparkEffect.Play();
+            Debug.Log("Spark effect triggered at cable connection!");
+        }
+        else
+        {
+            Debug.LogWarning("Cannot trigger sparks - Spark effect not assigned!");
+        }
+    }
+    
+    private IEnumerator PowerOnAfterSparks()
+    {
+        // Wait a moment for sparks to be visible
+        yield return new WaitForSeconds(0.3f);
+        
+        // Then power on the lights
         PowerOn();
     }
 

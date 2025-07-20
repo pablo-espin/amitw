@@ -54,7 +54,8 @@ public class InteractionDialogueTrigger : MonoBehaviour
                     dialogue.dialogueClip, 
                     dialogue.dialogueID, 
                     false, 
-                    dialogue.volume
+                    dialogue.volume,
+                    1.0f
                 );
                 
                 if (wasPlayed)

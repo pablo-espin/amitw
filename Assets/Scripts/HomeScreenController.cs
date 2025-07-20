@@ -21,9 +21,9 @@ public class HomeScreenController : MonoBehaviour
         // Set up controls text
         controlsText.text = "Controls:\n" +
                           "WASD - Move\n" +
-                          "Mouse - Look around\n" +
+                          "Mouse / Arrow Keys - Look around\n" +
                           "E - Interact\n" +
-                          "ESC - Unlock mouse";
+                          "P - Pause";
     }
 
     public void OnStartButtonClicked()

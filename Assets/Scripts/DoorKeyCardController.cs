@@ -3,11 +3,14 @@ using System.Collections;
 
 public class DoorKeyCardController : MonoBehaviour
 {
+    [Header("Interaction Prompt")]
+    [SerializeField] private string interactionPrompt = "Press E to open door";
+
     [Header("Door Settings")]
     [SerializeField] private float openAngle = 90f;
     [SerializeField] private float openSpeed = 2f;
     [SerializeField] private float interactionDistance = 3f;
-    
+
     [Header("References")]
     [SerializeField] private KeyCardAccessManager keyCardManager;
     [SerializeField] private BoxCollider doorCollider;
@@ -17,18 +20,18 @@ public class DoorKeyCardController : MonoBehaviour
     [SerializeField] private Material redMaterial; // Red emissive material
     [SerializeField] private Material greenMaterial; // Green emissive material
     [SerializeField] private Material blackMaterial; // Black material for when the key card lock flashes    
-    
+
     [Header("Audio")]
     [SerializeField] private AudioSource doorAudioSource;
     [SerializeField] private AudioClip doorOpenSound;
     [SerializeField] private AudioClip keyCardDeniedSound;
     [SerializeField] private AudioClip keyCardAcceptedSound;
-    
+
     [Header("Narration")]
     [SerializeField] private bool useNarration = true;
     [SerializeField] private string noKeyCardDialogueID = "door_no_keycard";
     [SerializeField] private string keyCardUsedDialogueID = "door_keycard_used";
-    
+
     private bool isOpen = false;
     private bool isInRange = false;
     private float currentAngle = 0f;
@@ -43,13 +46,13 @@ public class DoorKeyCardController : MonoBehaviour
             Debug.LogError("Player not found! Make sure the player has the 'Player' tag.");
             playerTransform = Camera.main?.transform;
         }
-            
+
         // Set initial key card light state to red
         if (keyCardLightRenderer != null && redMaterial != null)
         {
             keyCardLightRenderer.material = redMaterial;
         }
-        
+
         // Find key card manager if not set
         if (keyCardManager == null)
         {
@@ -69,7 +72,7 @@ public class DoorKeyCardController : MonoBehaviour
         // if (isInRange && Input.GetKeyDown(KeyCode.E) && !isOpen)
         // {
         //     TryOpenDoor();
-            
+
         //     // Trigger narration about needing a key card if:
         //     // 1. Player doesn't have a key card
         //     // 2. We haven't triggered this narration before
@@ -87,7 +90,12 @@ public class DoorKeyCardController : MonoBehaviour
             transform.localRotation = Quaternion.Euler(-90f, 0f, currentAngle);
         }
     }
-    
+
+        public string GetInteractionPrompt()
+    {
+        return !isOpen ? interactionPrompt : "";
+    }
+
     public void TryOpenDoor()
     {
         if (keyCardManager == null)
@@ -100,20 +108,20 @@ public class DoorKeyCardController : MonoBehaviour
             {
                 keyCardLightRenderer.material = greenMaterial;
             }
-            
+
             // Play key card accepted sound
             if (doorAudioSource != null && keyCardAcceptedSound != null)
             {
                 doorAudioSource.clip = keyCardAcceptedSound;
                 doorAudioSource.Play();
             }
-            
+
             // Trigger narration if enabled
             if (useNarration)
             {
                 TriggerKeyCardUsedNarration();
             }
-            
+
             // Wait a moment before opening the door
             StartCoroutine(OpenDoorAfterDelay(0.5f));
         }
@@ -125,7 +133,7 @@ public class DoorKeyCardController : MonoBehaviour
                 doorAudioSource.clip = keyCardDeniedSound;
                 doorAudioSource.Play();
             }
-            
+
             // Flash the red light
             if (keyCardLightRenderer != null)
             {
@@ -139,18 +147,18 @@ public class DoorKeyCardController : MonoBehaviour
             }
         }
     }
-    
+
     private IEnumerator OpenDoorAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-        
+
         // Open the door
         isOpen = true;
-        
+
         // Disable the collider when door opens
         if (doorCollider != null)
             doorCollider.enabled = false;
-            
+
         // Play door open sound
         if (doorAudioSource != null && doorOpenSound != null)
         {
@@ -158,54 +166,54 @@ public class DoorKeyCardController : MonoBehaviour
             doorAudioSource.Play();
         }
     }
-    
+
     private IEnumerator FlashRedLight()
     {
         Debug.Log("Starting flash sequence");
-        
+
         // Store original material
         Material originalMaterial = keyCardLightRenderer.material;
         Debug.Log("Original material: " + originalMaterial.name);
-        
+
         // Flash to black
         Debug.Log("Setting to black material 1");
         keyCardLightRenderer.material = blackMaterial;
         keyCardLightRenderer.enabled = true; // Ensure renderer is enabled
-        
+
         yield return new WaitForSeconds(0.1f);
-        
+
         // Flash to red
         Debug.Log("Setting back to red material 2");
         keyCardLightRenderer.material = originalMaterial;
         keyCardLightRenderer.enabled = true;
-        
+
         yield return new WaitForSeconds(0.1f);
-        
+
         // Flash to black again
         Debug.Log("Setting to black material again 3");
         keyCardLightRenderer.material = blackMaterial;
         keyCardLightRenderer.enabled = true;
-        
+
         yield return new WaitForSeconds(0.1f);
-        
+
         // Back to original red
         Debug.Log("Final setting back to red material 4");
         keyCardLightRenderer.material = originalMaterial;
         keyCardLightRenderer.enabled = true;
-        
+
         Debug.Log("Flash sequence complete");
     }
 
     private void TriggerNoKeyCardNarration()
     {
         hasTriggeredNoKeyCardDialogue = true;
-        
+
         if (GameInteractionDialogueManager.Instance != null)
         {
             GameInteractionDialogueManager.Instance.OnDoorWithoutKeyCard();
         }
     }
-    
+
     private void TriggerKeyCardUsedNarration()
     {
         if (GameInteractionDialogueManager.Instance != null)
@@ -219,4 +227,5 @@ public class DoorKeyCardController : MonoBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, interactionDistance);
     }
+    
 }

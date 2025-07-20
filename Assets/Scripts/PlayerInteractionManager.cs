@@ -103,6 +103,18 @@ public class PlayerInteractionManager : MonoBehaviour
                 return;
             }
 
+            // Check for key card door controller
+            DoorKeyCardController keyCardDoor = hit.collider.GetComponent<DoorKeyCardController>();
+            if (keyCardDoor != null)
+            {
+                string prompt = keyCardDoor.GetInteractionPrompt();
+                if (!string.IsNullOrEmpty(prompt))
+                {
+                    ShowInteractionPrompt(prompt);
+                    return;
+                }
+            }
+
             // Check for the lounge door interactable
             DoorInteractable doorObject = hit.collider.GetComponent<DoorInteractable>();
             if (doorObject != null)
@@ -185,7 +197,7 @@ public class PlayerInteractionManager : MonoBehaviour
                 return;
             }
 
-            // Check for restricted area door interactable
+            // Check for key card door controller (restricted area door)
             DoorKeyCardController doorController = hit.collider.GetComponent<DoorKeyCardController>();
             if (doorController != null)
             {
@@ -194,7 +206,7 @@ public class PlayerInteractionManager : MonoBehaviour
                 return;
             }
 
-            // Check for door interactable
+            // Check for lounge door interactable
             DoorInteractable doorObject = hit.collider.GetComponent<DoorInteractable>();
             if (doorObject != null)
             {

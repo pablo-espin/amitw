@@ -19,6 +19,12 @@ public class WaterClueSystem : MonoBehaviour
     [SerializeField] private float waterFillTime = 3f;
     [SerializeField] private float waterDrainTime = 2f;
     
+    [Header("Water Level Animation")]
+    [SerializeField] private float waterMinHeight = -0.5f; // Start position (below basin)
+    [SerializeField] private float waterMaxHeight = 0.1f;  // End position (filled basin)
+    [SerializeField] private AnimationCurve waterFillCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField] private AnimationCurve waterDrainCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    
     [Header("Clue Settings")]
     [SerializeField] private string waterClueCode = "H2O-781";
     [SerializeField] private GameObject clueTextObject;
@@ -26,19 +32,37 @@ public class WaterClueSystem : MonoBehaviour
     
     // References for interaction
     private PlayerInteractionManager interactionManager;
-    private Coroutine waterFillCoroutine;
+    private Coroutine waterAnimationCoroutine;
     
-    // Store original basin water scale
+    // Store original basin water position and scale
+    private Vector3 originalBasinPosition;
     private Vector3 originalBasinScale;
+    
+    // Store valve wheel's original rotation
+    private Vector3 valveOriginalRotation;
     
     void Start()
     {
         // Find the interaction manager
         interactionManager = FindObjectOfType<PlayerInteractionManager>();
         
-        // Store original basin water scale
-        if (basinWaterObject) {
+        // Store original basin water position and scale
+        if (basinWaterObject != null) 
+        {
+            originalBasinPosition = basinWaterObject.transform.localPosition;
             originalBasinScale = basinWaterObject.transform.localScale;
+            
+            // Set initial position to minimum height (empty basin)
+            Vector3 startPosition = originalBasinPosition;
+            startPosition.y = waterMinHeight;
+            basinWaterObject.transform.localPosition = startPosition;
+        }
+        
+        // Store valve wheel's original rotation
+        if (valveWheel != null)
+        {
+            valveOriginalRotation = valveWheel.localEulerAngles;
+            Debug.Log($"Valve original rotation stored: {valveOriginalRotation}");
         }
         
         // Set initial states
@@ -96,7 +120,6 @@ public class WaterClueSystem : MonoBehaviour
         {
             Debug.Log("Opening valve");
             OpenValve();
-            Debug.Log("Valve opened: " + valveOpened);
 
             // Trigger narrator dialogue when valve is opened
             if (GameInteractionDialogueManager.Instance != null)
@@ -108,7 +131,6 @@ public class WaterClueSystem : MonoBehaviour
         {
             Debug.Log("Closing valve");
             CloseValve();
-            Debug.Log("Valve closed: " + valveOpened);
         }
     }
     
@@ -138,16 +160,16 @@ public class WaterClueSystem : MonoBehaviour
         }
         
         // Drain water if it was filling
-        if (waterFillCoroutine != null)
+        if (waterAnimationCoroutine != null)
         {
-            StopCoroutine(waterFillCoroutine);
-            StartCoroutine(DrainWater());
+            StopCoroutine(waterAnimationCoroutine);
+            waterAnimationCoroutine = StartCoroutine(DrainWater());
         }
     }
     
     private void OpenValve()
     {
-        StartCoroutine(AnimateValveRotation());
+        StartCoroutine(AnimateValveToPosition(true));
         valveOpened = true;
         
         // Check if water should flow
@@ -156,7 +178,7 @@ public class WaterClueSystem : MonoBehaviour
     
     private void CloseValve()
     {
-        StartCoroutine(AnimateValveRotation());
+        StartCoroutine(AnimateValveToPosition(false));
         valveOpened = false;
         
         // Stop water flow
@@ -172,10 +194,10 @@ public class WaterClueSystem : MonoBehaviour
         }
         
         // Drain water if it was filling
-        if (waterFillCoroutine != null)
+        if (waterAnimationCoroutine != null)
         {
-            StopCoroutine(waterFillCoroutine);
-            StartCoroutine(DrainWater());
+            StopCoroutine(waterAnimationCoroutine);
+            waterAnimationCoroutine = StartCoroutine(DrainWater());
         }
     }
     
@@ -206,26 +228,52 @@ public class WaterClueSystem : MonoBehaviour
             }
             
             // Start filling basin
-            waterFillCoroutine = StartCoroutine(FillBasin());
+            waterAnimationCoroutine = StartCoroutine(FillBasin());
         }
     }
     
-    private IEnumerator AnimateValveRotation()
+    private IEnumerator AnimateValveToPosition(bool opening)
     {
         // Temporarily disable player interaction during animation
         if (interactionManager != null) interactionManager.SetInteractionEnabled(false);
         
-        float targetRotation = valveRotationAmount;
-        float time = 0;
+        // Determine start and end rotations
         Vector3 startRotation = valveWheel.localEulerAngles;
+        Vector3 targetRotation;
         
-        while (time < 1)
+        if (opening)
         {
-            time += Time.deltaTime * valveRotationSpeed;
-            float zRotation = startRotation.z + (targetRotation * time);
-            valveWheel.localEulerAngles = new Vector3(startRotation.x, startRotation.y, zRotation);
+            // Opening: rotate from original position to original + valveRotationAmount
+            targetRotation = valveOriginalRotation;
+            targetRotation.z = valveOriginalRotation.z + valveRotationAmount;
+        }
+        else
+        {
+            // Closing: rotate back to original position
+            targetRotation = valveOriginalRotation;
+        }
+        
+        Debug.Log($"Valve animation - Opening: {opening}, Start: {startRotation}, Target: {targetRotation}");
+        
+        float animationTime = 1f / valveRotationSpeed;
+        float elapsed = 0f;
+        
+        while (elapsed < animationTime)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / animationTime;
+            
+            // Smoothly interpolate between start and target rotation
+            Vector3 currentRotation = Vector3.Lerp(startRotation, targetRotation, t);
+            valveWheel.localEulerAngles = currentRotation;
+            
             yield return null;
         }
+        
+        // Ensure final rotation is exactly the target
+        valveWheel.localEulerAngles = targetRotation;
+        
+        Debug.Log($"Valve animation complete. Final rotation: {valveWheel.localEulerAngles}");
         
         // Re-enable player interaction
         if (interactionManager != null) interactionManager.SetInteractionEnabled(true);
@@ -233,72 +281,123 @@ public class WaterClueSystem : MonoBehaviour
     
     private IEnumerator FillBasin()
     {
-        // Show basin water object at minimum scale
-        if (basinWaterObject)
+        // Show basin water object at minimum height
+        if (basinWaterObject != null)
         {
             basinWaterObject.SetActive(true);
-            // Use original X and Z scale, but minimal Y scale
-            basinWaterObject.transform.localScale = new Vector3(
-                originalBasinScale.x, 
-                originalBasinScale.y * 0.01f, 
-                originalBasinScale.z);
+            
+            // Set starting position at minimum height
+            Vector3 startPosition = originalBasinPosition;
+            startPosition.y = waterMinHeight;
+            basinWaterObject.transform.localPosition = startPosition;
+            
+            // Ensure scale is correct
+            basinWaterObject.transform.localScale = originalBasinScale;
         }
         
-        float time = 0;
-        while (time < waterFillTime)
+        float elapsed = 0f;
+        while (elapsed < waterFillTime)
         {
-            time += Time.deltaTime;
-            if (basinWaterObject)
+            elapsed += Time.deltaTime;
+            float normalizedTime = elapsed / waterFillTime;
+            
+            if (basinWaterObject != null)
             {
-                // Gradually increase water height while preserving X and Z scale
-                float waterHeight = Mathf.Lerp(0.01f, 1f, time / waterFillTime);
-                basinWaterObject.transform.localScale = new Vector3(
-                    originalBasinScale.x, 
-                    originalBasinScale.y * waterHeight, 
-                    originalBasinScale.z);
+                // Use animation curve for smooth filling
+                float curveValue = waterFillCurve.Evaluate(normalizedTime);
+                
+                // Interpolate between min and max height
+                float currentHeight = Mathf.Lerp(waterMinHeight, waterMaxHeight, curveValue);
+                
+                // Update position
+                Vector3 currentPosition = originalBasinPosition;
+                currentPosition.y = currentHeight;
+                basinWaterObject.transform.localPosition = currentPosition;
             }
             yield return null;
         }
         
-        // Reveal clue only if not already revealed
-        if (!clueRevealed)
+        // Ensure final position is exactly at max height
+        if (basinWaterObject != null)
         {
-            RevealClue();
+            Vector3 finalPosition = originalBasinPosition;
+            finalPosition.y = waterMaxHeight;
+            basinWaterObject.transform.localPosition = finalPosition;
         }
+        
+        // NOTE: Clue is no longer revealed here - it will be revealed when water drains
+        Debug.Log("Basin filling complete - clue will be revealed when water drains");
     }
     
     private IEnumerator DrainWater()
     {
-        if (!basinWaterObject) yield break;
+        if (basinWaterObject == null || !basinWaterObject.activeSelf) 
+            yield break;
         
-        float startHeight = basinWaterObject.transform.localScale.y / originalBasinScale.y;
-        float time = 0;
+        Debug.Log("Starting water drain");
         
-        while (time < waterDrainTime)
+        // Get current water height
+        float startHeight = basinWaterObject.transform.localPosition.y;
+        
+        float elapsed = 0f;
+        while (elapsed < waterDrainTime)
         {
-            time += Time.deltaTime;
-            float waterHeight = Mathf.Lerp(startHeight, 0.01f, time / waterDrainTime);
-            basinWaterObject.transform.localScale = new Vector3(
-                originalBasinScale.x, 
-                originalBasinScale.y * waterHeight, 
-                originalBasinScale.z);
+            elapsed += Time.deltaTime;
+            float normalizedTime = elapsed / waterDrainTime;
+            
+            // Use animation curve for smooth draining
+            float curveValue = waterDrainCurve.Evaluate(normalizedTime);
+            
+            // Interpolate from current height to min height
+            float currentHeight = Mathf.Lerp(startHeight, waterMinHeight, curveValue);
+            
+            // Update position
+            Vector3 currentPosition = originalBasinPosition;
+            currentPosition.y = currentHeight;
+            basinWaterObject.transform.localPosition = currentPosition;
+            
             yield return null;
         }
         
+        // Hide the water object when fully drained
         basinWaterObject.SetActive(false);
+        Debug.Log("Water drain complete, water object deactivated");
+        
+        // REVEAL CLUE AFTER WATER HAS COMPLETELY DRAINED
+        if (!clueRevealed)
+        {
+            Debug.Log("Water has completely drained - revealing clue now!");
+            RevealClue();
+        }
     }
     
     private void RevealClue()
     {
         clueRevealed = true;
         
-        // Show clue text
-        if (clueTextObject) clueTextObject.SetActive(true);
+        // Show clue text and ensure it stays visible permanently
+        if (clueTextObject) 
+        {
+            clueTextObject.SetActive(true);
+            Debug.Log("Water clue text revealed and activated: " + clueTextObject.name);
+        }
+        else
+        {
+            Debug.LogError("ClueTextObject is null! Make sure it's assigned in the inspector.");
+        }
         
-        // Update progress UI
-        if (clueProgressUI) clueProgressUI.SolveClue("water", waterClueCode);
+        // Update progress UI (this updates the HUD)
+        if (clueProgressUI) 
+        {
+            clueProgressUI.SolveClue("water", waterClueCode);
+            Debug.Log("Water clue registered in HUD UI with code: " + waterClueCode);
+        }
+        else
+        {
+            Debug.LogError("ClueProgressUI is null! Make sure it's assigned in the inspector.");
+        }
         
         // Trigger narration or other events
-        Debug.Log("Water clue revealed: " + waterClueCode);
+        Debug.Log("Water clue fully revealed: " + waterClueCode);
     }
 }
