@@ -4,14 +4,14 @@ public class GameInteractionDialogueManager : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private InteractionDialogueTrigger interactionDialogue;
-    
+
     // Track interaction states
     private bool hasTapInteractionOccurred = false;
     private bool hasFoundFirstClue = false;
-    
+
     // Singleton pattern
     public static GameInteractionDialogueManager Instance { get; private set; }
-    
+
     private void Awake()
     {
         // Singleton setup
@@ -25,7 +25,7 @@ public class GameInteractionDialogueManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-    
+
     private void Start()
     {
         // Find InteractionDialogueTrigger if not set
@@ -33,7 +33,7 @@ public class GameInteractionDialogueManager : MonoBehaviour
         {
             // Try to find an existing component first
             interactionDialogue = GetComponent<InteractionDialogueTrigger>();
-            
+
             if (interactionDialogue == null)
             {
                 // Add the component if it doesn't exist
@@ -42,14 +42,14 @@ public class GameInteractionDialogueManager : MonoBehaviour
             }
         }
     }
-    
+
     // Memory sphere interaction - "Do as I say"
     public void OnMemorySphereFirstInteraction()
     {
         if (interactionDialogue != null)
             interactionDialogue.TriggerInteractionDialogue("Clue");
     }
-    
+
     // Water tap interaction - "Sink no water"
     public void OnWaterTapWithValveClosed()
     {
@@ -57,14 +57,14 @@ public class GameInteractionDialogueManager : MonoBehaviour
         if (interactionDialogue != null)
             interactionDialogue.TriggerInteractionDialogue("sink_no_water");
     }
-    
+
     // Valve interaction - "Water on"
     public void OnValveOpened()
     {
         if (hasTapInteractionOccurred && interactionDialogue != null)
             interactionDialogue.TriggerInteractionDialogue("water_on");
     }
-    
+
     // First clue found - "First clue"
     public void OnFirstClueFound(string clueType)
     {
@@ -74,21 +74,21 @@ public class GameInteractionDialogueManager : MonoBehaviour
             interactionDialogue.TriggerInteractionDialogue("first_clue");
         }
     }
-    
+
     // Electricity clue solved - "Electricity solved"
     public void OnElectricityConnected()
     {
         if (interactionDialogue != null)
             interactionDialogue.TriggerInteractionDialogue("electricity_solved");
     }
-    
+
     // Location list paper interaction - "Paper"
     public void OnLocationListExamined()
     {
         if (interactionDialogue != null)
             interactionDialogue.TriggerInteractionDialogue("paper_examined");
     }
-    
+
     // CAPTCHA solved - "Captcha"
     public void OnCaptchaSolved()
     {
@@ -108,5 +108,12 @@ public class GameInteractionDialogueManager : MonoBehaviour
     {
         if (interactionDialogue != null)
             interactionDialogue.TriggerInteractionDialogue("door_keycard_used");
+    }
+
+    // Lockdown initiated - "Lockdown"
+    public void OnLockdownInitiated()
+    {
+        if (interactionDialogue != null)
+            interactionDialogue.TriggerInteractionDialogue("lockdown_initiated");
     }
 }

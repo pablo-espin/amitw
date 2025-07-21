@@ -29,7 +29,7 @@ public class DoorInteractable : MonoBehaviour
             doorCollider = GetComponent<BoxCollider>();
         }
         
-        Debug.Log($"Door initial rotation: {initialYRotation}");
+        // Debug.Log($"Door initial rotation: {initialYRotation}");
     }
     
     private void Update()
@@ -71,11 +71,10 @@ public class DoorInteractable : MonoBehaviour
         {
             OpenDoor();
             
-            // Play door sound if you have an InteractionSoundManager
+            // Play door sound via InteractionSoundManager
             if (InteractionSoundManager.Instance != null)
             {
-                // You'll need to add this method to your InteractionSoundManager
-                // InteractionSoundManager.Instance.PlayDoorOpen();
+                InteractionSoundManager.Instance.PlayLoungeDoorOpen();
             }
         }
     }

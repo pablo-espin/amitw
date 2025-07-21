@@ -43,8 +43,12 @@ public class InteractionSoundManager : MonoBehaviour
     [SerializeField] private InteractionSoundCategory keyCardAccepted;
     [SerializeField] private InteractionSoundCategory doorOpen;
 
-    [Header("Loung Door Sounds")]
+    [Header("Lounge Door Sounds")]
     [SerializeField] private InteractionSoundCategory loungeDoorOpen;
+
+    [Header("Exit Door Sounds")]
+    [SerializeField] private InteractionSoundCategory exitDoorOpen;
+    [SerializeField] private InteractionSoundCategory exitDoorLocked;
 
 
     [Header("Settings")]
@@ -350,10 +354,21 @@ public class InteractionSoundManager : MonoBehaviour
         PlaySound(doorOpen);
     }
 
-    // Door sounds
+    // Lounge Door sound
     public void PlayLoungeDoorOpen()
     {
         PlaySound(loungeDoorOpen);
+    }
+
+    // Exit Door Sounds
+    public void PlayExitDoorOpen()
+    {
+        PlaySound(exitDoorOpen);
+    }
+
+    public void PlayExitDoorLocked()
+    {
+        PlaySound(exitDoorLocked);
     }
 
     public AudioSource StartMatrixAnimation()

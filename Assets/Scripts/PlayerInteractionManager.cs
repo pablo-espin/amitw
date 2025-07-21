@@ -123,6 +123,23 @@ public class PlayerInteractionManager : MonoBehaviour
                 return;
             }
             
+            // Check for the exit door controller
+            ExitDoorController exitDoor = hit.collider.GetComponent<ExitDoorController>();
+            if (exitDoor != null)
+            {
+                string prompt = exitDoor.GetInteractionPrompt();
+                if (!string.IsNullOrEmpty(prompt))
+                {
+                    ShowInteractionPrompt(prompt);
+                    return;
+                }
+                else
+                {
+                    // Still show we can interact (for locked door sound)
+                    // ShowInteractionPrompt("Press E to try door");
+                    return;
+                }
+            }
 
             // If no valid interactable found, hide prompt
             HideInteractionPrompt();
@@ -148,7 +165,7 @@ public class PlayerInteractionManager : MonoBehaviour
                 currentMemorySphere = sphere;
                 return;
             }
-            
+
             // Check for water interactables
             WaterInteractable waterObject = hit.collider.GetComponent<WaterInteractable>();
             if (waterObject != null)
@@ -156,7 +173,7 @@ public class PlayerInteractionManager : MonoBehaviour
                 waterObject.Interact();
                 return;
             }
-            
+
             // Check for electricity interactables
             ElectricityInteractable electricityObject = hit.collider.GetComponent<ElectricityInteractable>();
             if (electricityObject != null)
@@ -164,7 +181,7 @@ public class PlayerInteractionManager : MonoBehaviour
                 electricityObject.Interact();
                 return;
             }
-            
+
             // Check for location interactables
             LocationInteractable locationObject = hit.collider.GetComponent<LocationInteractable>();
             if (locationObject != null)
@@ -172,7 +189,7 @@ public class PlayerInteractionManager : MonoBehaviour
                 locationObject.Interact();
                 return;
             }
-            
+
             // Check for false clue interactable
             FalseClueInteractable falseClueObject = hit.collider.GetComponent<FalseClueInteractable>();
             if (falseClueObject != null)
@@ -180,7 +197,7 @@ public class PlayerInteractionManager : MonoBehaviour
                 falseClueObject.Interact();
                 return;
             }
-            
+
             // Check for manual interactable
             ManualInteractable manualObject = hit.collider.GetComponent<ManualInteractable>();
             if (manualObject != null)
@@ -211,6 +228,14 @@ public class PlayerInteractionManager : MonoBehaviour
             if (doorObject != null)
             {
                 doorObject.Interact();
+                return;
+            }
+            
+            // Check for exit door
+            ExitDoorController exitDoorController = hit.collider.GetComponent<ExitDoorController>();
+            if (exitDoorController != null)
+            {
+                exitDoorController.Interact();
                 return;
             }
         }
