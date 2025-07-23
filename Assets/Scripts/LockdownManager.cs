@@ -276,7 +276,10 @@ public class LockdownManager : MonoBehaviour
         {
             exitDoor.SetEscapeWindowActive(false);
         }
-        
+
+        // Trigger server rack emergency mode
+        ServerRackMaterialController.SetAllRacksEmergencyMode(true, true, 0.05f);
+
         // Trigger the lighting transition to red
         DualLightmapController lightmapController = FindObjectOfType<DualLightmapController>();
         if (lightmapController != null)

@@ -25,6 +25,12 @@ public class ElectricityClueSystem : MonoBehaviour
     [SerializeField] private Light[] areaLights;
     [SerializeField] private float areaLightIntensity = 1f;
     
+    [Header("Server Rack Integration")]
+    [SerializeField] private ServerRackMaterialController[] serversToActivate; // Specific servers to power on
+    [SerializeField] private bool useServerRackSystem = true; // Toggle server rack integration
+    [SerializeField] private bool debugServerSystem = true; // Debug server system
+    [SerializeField] private float serverActivationDelay = 0.1f; // Delay between server activations
+    
     [Header("Clue Settings")]
     [SerializeField] private string electricityClueCode = "KWH-365";
     [SerializeField] private GameObject clueTextObject;
@@ -93,6 +99,34 @@ public class ElectricityClueSystem : MonoBehaviour
         else
         {
             Debug.LogError("CableEnd transform not assigned!");
+        }
+        
+        // Debug server rack system
+        if (useServerRackSystem && debugServerSystem)
+        {
+            Debug.Log($"ElectricityClueSystem: Server rack integration enabled");
+            Debug.Log($"Servers to activate: {(serversToActivate != null ? serversToActivate.Length : 0)}");
+            
+            if (serversToActivate != null && serversToActivate.Length > 0)
+            {
+                Debug.Log("Registered servers:");
+                for (int i = 0; i < serversToActivate.Length; i++)
+                {
+                    var server = serversToActivate[i];
+                    if (server != null)
+                    {
+                        Debug.Log($"  [{i}] {server.gameObject.name} - Current State: {server.GetCurrentState()}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"  [{i}] NULL SERVER REFERENCE");
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogWarning("No servers registered for activation!");
+            }
         }
     }
     
@@ -223,6 +257,8 @@ public class ElectricityClueSystem : MonoBehaviour
 
     private void PowerOn()
     {
+        Debug.Log("PowerOn() called - starting power sequence");
+        
         // Trigger dialogue for electricity connection
         if (GameInteractionDialogueManager.Instance != null)
         {
@@ -231,6 +267,77 @@ public class ElectricityClueSystem : MonoBehaviour
 
         // Turn on lights with a brief delay between them for effect
         StartCoroutine(SequentialLightUp());
+
+        // Turn on registered servers
+        if (useServerRackSystem)
+        {
+            if (debugServerSystem)
+            {
+                Debug.Log($"Attempting to power on {(serversToActivate != null ? serversToActivate.Length : 0)} registered servers");
+            }
+            
+            if (serversToActivate != null && serversToActivate.Length > 0)
+            {
+                StartCoroutine(ActivateRegisteredServers());
+            }
+            else
+            {
+                Debug.LogWarning("No servers registered for activation in ElectricityClueSystem!");
+            }
+        }
+        else
+        {
+            Debug.Log("Server rack system disabled in ElectricityClueSystem");
+        }
+    }
+    
+    private IEnumerator ActivateRegisteredServers()
+    {
+        Debug.Log($"Starting server activation sequence for {serversToActivate.Length} servers");
+        
+        int activatedCount = 0;
+        for (int i = 0; i < serversToActivate.Length; i++)
+        {
+            var server = serversToActivate[i];
+            if (server != null)
+            {
+                if (debugServerSystem)
+                {
+                    Debug.Log($"Activating server [{i}] {server.gameObject.name} - Current state: {server.GetCurrentState()}");
+                }
+                
+                // Power on the server (change from PoweredOff to Normal)
+                server.SetState(ServerRackMaterialController.ServerState.Normal);
+                activatedCount++;
+                
+                // Small delay between activations for visual effect
+                if (serverActivationDelay > 0 && i < serversToActivate.Length - 1)
+                {
+                    yield return new WaitForSeconds(serverActivationDelay);
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"Server [{i}] is null! Please assign all server references in the inspector.");
+            }
+        }
+        
+        Debug.Log($"Server activation complete! Activated {activatedCount} out of {serversToActivate.Length} servers");
+        
+        if (debugServerSystem)
+        {
+            // Show updated states after a brief delay
+            yield return new WaitForSeconds(0.5f);
+            Debug.Log("=== Server states after activation ===");
+            for (int i = 0; i < serversToActivate.Length; i++)
+            {
+                var server = serversToActivate[i];
+                if (server != null)
+                {
+                    Debug.Log($"  {server.gameObject.name}: {server.GetCurrentState()}");
+                }
+            }
+        }
     }
     
     private IEnumerator SequentialLightUp()
@@ -341,5 +448,68 @@ public class ElectricityClueSystem : MonoBehaviour
         
         // Log for debugging
         Debug.Log("Electricity clue revealed: " + electricityClueCode);
+    }
+    
+    // Debug methods
+    [ContextMenu("Test Server Activation")]
+    private void TestServerActivation()
+    {
+        if (serversToActivate != null && serversToActivate.Length > 0)
+        {
+            Debug.Log($"Testing activation of {serversToActivate.Length} registered servers");
+            StartCoroutine(ActivateRegisteredServers());
+        }
+        else
+        {
+            Debug.LogWarning("No servers registered for activation! Assign servers in the inspector.");
+        }
+    }
+    
+    [ContextMenu("Show Registered Server States")]
+    private void ShowRegisteredServerStates()
+    {
+        if (serversToActivate != null && serversToActivate.Length > 0)
+        {
+            Debug.Log("=== Registered Server States ===");
+            for (int i = 0; i < serversToActivate.Length; i++)
+            {
+                var server = serversToActivate[i];
+                if (server != null)
+                {
+                    Debug.Log($"[{i}] {server.gameObject.name}: {server.GetCurrentState()}");
+                }
+                else
+                {
+                    Debug.Log($"[{i}] NULL REFERENCE");
+                }
+            }
+            Debug.Log("================================");
+        }
+        else
+        {
+            Debug.LogWarning("No servers registered!");
+        }
+    }
+    
+    [ContextMenu("Reset Registered Servers to PoweredOff")]
+    private void ResetRegisteredServersToPoweredOff()
+    {
+        if (serversToActivate != null && serversToActivate.Length > 0)
+        {
+            Debug.Log($"Resetting {serversToActivate.Length} registered servers to PoweredOff state");
+            for (int i = 0; i < serversToActivate.Length; i++)
+            {
+                var server = serversToActivate[i];
+                if (server != null)
+                {
+                    server.SetState(ServerRackMaterialController.ServerState.PoweredOff);
+                    Debug.Log($"Reset {server.gameObject.name} to PoweredOff");
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("No servers registered!");
+        }
     }
 }

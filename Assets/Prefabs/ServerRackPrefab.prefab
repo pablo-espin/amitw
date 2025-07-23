@@ -10,15 +10,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: e890ebcda1b5a8e47a770ae289370dd2, type: 3}
       propertyPath: m_LocalScale.x
-      value: 98
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e890ebcda1b5a8e47a770ae289370dd2, type: 3}
       propertyPath: m_LocalScale.y
-      value: 98
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e890ebcda1b5a8e47a770ae289370dd2, type: 3}
       propertyPath: m_LocalScale.z
-      value: 98
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e890ebcda1b5a8e47a770ae289370dd2, type: 3}
       propertyPath: m_LocalPosition.x
@@ -65,12 +65,16 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: e890ebcda1b5a8e47a770ae289370dd2, type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: e890ebcda1b5a8e47a770ae289370dd2, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: e3ee91713ea6ec74ca306cbe18191bee, type: 2}
     - target: {fileID: 919132149155446097, guid: e890ebcda1b5a8e47a770ae289370dd2, type: 3}
       propertyPath: m_Name
-      value: ServerRack
+      value: ServerRackPrefab
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: e890ebcda1b5a8e47a770ae289370dd2, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -82,14 +86,38 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e890ebcda1b5a8e47a770ae289370dd2, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -611620706672808007}
+      addedObject: {fileID: 5040560187974035649}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e890ebcda1b5a8e47a770ae289370dd2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -5611585709002969664}
   m_SourcePrefab: {fileID: 100100000, guid: e890ebcda1b5a8e47a770ae289370dd2, type: 3}
 --- !u!1 &2873192891342743785 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: e890ebcda1b5a8e47a770ae289370dd2, type: 3}
   m_PrefabInstance: {fileID: 3107141141391496632}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &-611620706672808007
+--- !u!65 &5040560187974035649
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2873192891342743785}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.010832824, y: 0.001764596, z: 0.022283712}
+  m_Center: {x: 0.06112315, y: 0.54397213, z: 0.011141858}
+--- !u!114 &-5611585709002969664
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -98,16 +126,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 2873192891342743785}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62d2f269622acb7418c303781601a05d, type: 3}
+  m_Script: {fileID: 11500000, guid: 9eb1eb169ebe3884cb2e8a5bed7e1cc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isEmergencyMode: 0
-  normalPowerColor: {r: 0, g: 1, b: 0, a: 1}
-  normalHDDColor: {r: 0, g: 0.5, b: 1, a: 1}
-  normalNetworkColor: {r: 1, g: 0.8, b: 0, a: 1}
-  emergencyPowerColor: {r: 1, g: 0, b: 0, a: 1}
-  emergencyPowerIntensity: 3
-  emergencyPulseSpeed: 2
+  normalMaterial: {fileID: 2100000, guid: e3ee91713ea6ec74ca306cbe18191bee, type: 2}
+  emergencyMaterial: {fileID: 2100000, guid: e13f5400a0f62f34bbfd0793e927b32a, type: 2}
+  poweredOffMaterial: {fileID: 2100000, guid: 4372cd1bf9e40ce4389e974bd615e254, type: 2}
+  highActivityMaterial: {fileID: 2100000, guid: 953ac7208693fec499958b3ec1dc8c2a, type: 2}
+  initialState: 0
+  useTransitions: 1
   transitionDuration: 2
-  cascadeEffect: 1
-  cascadeDelay: 0.05
