@@ -89,11 +89,22 @@ public class GameInteractionDialogueManager : MonoBehaviour
             interactionDialogue.TriggerInteractionDialogue("paper_examined");
     }
 
-    // CAPTCHA solved - "Captcha"
+    // CAPTCHA solved - "Captcha" + trigger post-CAPTCHA system
     public void OnCaptchaSolved()
     {
         if (interactionDialogue != null)
             interactionDialogue.TriggerInteractionDialogue("captcha_solved");
+
+        // Activate post-CAPTCHA dialogue system
+        if (PostCaptchaDialogueTrigger.Instance != null)
+        {
+            PostCaptchaDialogueTrigger.Instance.OnCaptchaSolved();
+            Debug.Log("Post-CAPTCHA dialogue system activated via GameInteractionDialogueManager");
+        }
+        else
+        {
+            Debug.LogWarning("PostCaptchaDialogueTrigger.Instance not found! Make sure PostCaptchaDialogueTrigger is in the scene.");
+        }
     }
 
     // Door interaction - "Need key card"

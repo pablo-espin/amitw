@@ -9,7 +9,11 @@ public class ProximityDialogueTrigger : MonoBehaviour
     [SerializeField] private float volume = 1f;
     [Tooltip("Text representation of the dialogue (for debugging)")]
     [SerializeField, TextArea(2, 5)] private string dialogueText;
-    
+
+    [Header("CAPTCHA Requirement")]
+    [SerializeField] private bool requiresCaptchaSolved = false;
+    [Tooltip("If true, this dialogue will only play after the CAPTCHA puzzle is solved")]
+
     [Header("Trigger Settings")]
     [SerializeField] private float triggerRadius = 3f;
     [SerializeField] private bool requireLookingAt = false;
@@ -134,6 +138,16 @@ public class ProximityDialogueTrigger : MonoBehaviour
     
     private void TriggerDialogue()
     {
+        // Check CAPTCHA requirement if needed
+        if (requiresCaptchaSolved)
+        {
+            if (PostCaptchaDialogueTrigger.Instance == null || !PostCaptchaDialogueTrigger.Instance.IsCaptchaSolved())
+            {
+                // CAPTCHA not solved yet, don't trigger
+                return;
+            }
+        }
+
         if (NarratorManager.Instance != null && dialogueClip != null)
         {
             Debug.Log($"Attempting to play dialogue: {dialogueID}");
@@ -169,7 +183,20 @@ public class ProximityDialogueTrigger : MonoBehaviour
         if (!showTriggerRadius)
             return;
             
-        Gizmos.color = hasPlayed ? Color.gray : Color.cyan;
+        // Color coding: Red if requires CAPTCHA but not solved, Cyan if ready to trigger, Gray if already played
+        Color gizmoColor = Color.cyan;
+        
+        if (hasPlayed)
+        {
+            gizmoColor = Color.gray;
+        }
+        else if (requiresCaptchaSolved)
+        {
+            bool captchaSolved = PostCaptchaDialogueTrigger.Instance != null && PostCaptchaDialogueTrigger.Instance.IsCaptchaSolved();
+            gizmoColor = captchaSolved ? Color.green : Color.red;
+        }
+        
+        Gizmos.color = gizmoColor;
         Gizmos.DrawWireSphere(transform.position, triggerRadius);
         
         if (requireLookingAt)
@@ -178,7 +205,7 @@ public class ProximityDialogueTrigger : MonoBehaviour
             Gizmos.DrawRay(transform.position, Vector3.forward * (triggerRadius * 0.8f));
         }
     }
-    
+
     // Public method to force-trigger from outside (useful for debugging)
     public void ForcePlayDialogue()
     {
