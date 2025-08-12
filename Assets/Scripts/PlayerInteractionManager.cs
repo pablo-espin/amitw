@@ -87,12 +87,28 @@ public class PlayerInteractionManager : MonoBehaviour
                 return;
             }
             
-            // Check for manual interactable
+            // Check for locker door controller (NEW - high priority)
+            LockerDoorController lockerDoor = hit.collider.GetComponent<LockerDoorController>();
+            if (lockerDoor != null)
+            {
+                string prompt = lockerDoor.GetInteractionPrompt();
+                if (!string.IsNullOrEmpty(prompt))
+                {
+                    ShowInteractionPrompt(prompt);
+                    return;
+                }
+            }
+            
+            // Check for manual interactable (MOVED AFTER locker door check)
             ManualInteractable manualObject = hit.collider.GetComponent<ManualInteractable>();
             if (manualObject != null)
             {
-                ShowInteractionPrompt(manualObject.GetInteractionPrompt());
-                return;
+                string prompt = manualObject.GetInteractionPrompt();
+                if (!string.IsNullOrEmpty(prompt))
+                {
+                    ShowInteractionPrompt(prompt);
+                    return;
+                }
             }
 
             // Check for key card interactable
@@ -198,7 +214,16 @@ public class PlayerInteractionManager : MonoBehaviour
                 return;
             }
 
-            // Check for manual interactable
+            // Check for locker door controller (NEW - high priority)
+            LockerDoorController lockerDoorController = hit.collider.GetComponent<LockerDoorController>();
+            if (lockerDoorController != null)
+            {
+                Debug.Log("Interacting with locker door");
+                lockerDoorController.Interact();
+                return;
+            }
+
+            // Check for manual interactable (MOVED AFTER locker door check)
             ManualInteractable manualObject = hit.collider.GetComponent<ManualInteractable>();
             if (manualObject != null)
             {

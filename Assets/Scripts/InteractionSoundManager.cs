@@ -50,6 +50,10 @@ public class InteractionSoundManager : MonoBehaviour
     [SerializeField] private InteractionSoundCategory exitDoorOpen;
     [SerializeField] private InteractionSoundCategory exitDoorLocked;
 
+    [Header("Locker Door Sounds")]
+    [SerializeField] private InteractionSoundCategory lockerDoorOpen;
+    [SerializeField] private InteractionSoundCategory lockerDoorClose;
+
 
     [Header("Settings")]
     [SerializeField] private int audioSourcePoolSize = 5;
@@ -381,11 +385,22 @@ public class InteractionSoundManager : MonoBehaviour
         StopLoopingSound("matrix_animation");
     }
 
+    // Locker Door Sounds
+    public void PlayLockerDoorOpen()
+    {
+        PlaySound(lockerDoorOpen);
+    }
+
+    public void PlayLockerDoorClose()
+    {
+        PlaySound(lockerDoorClose);
+    }
+
     // Method to set master volume
     public void SetMasterVolume(float volume)
     {
         masterVolume = Mathf.Clamp01(volume);
-        
+
         // Update volume of all looping sounds
         foreach (var source in loopingSources.Values)
         {
@@ -396,7 +411,7 @@ public class InteractionSoundManager : MonoBehaviour
                 // Find which category this source belongs to
                 if (source.clip == waterRunning.clips[0]) category = waterRunning;
                 else if (source.clip == matrixAnimation.clips[0]) category = matrixAnimation;
-                
+
                 if (category != null)
                 {
                     source.volume = category.volume * masterVolume;
