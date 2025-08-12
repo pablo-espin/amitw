@@ -53,6 +53,16 @@ public class LockerDoorController : MonoBehaviour
         initialZRotation = transformToAnimate.localRotation.eulerAngles.y;
         currentAngle = initialZRotation;
 
+        // Auto-find manual if not assigned
+        if (manualInteractable == null)
+        {
+            manualInteractable = FindObjectOfType<ManualInteractable>();
+            if (manualInteractable != null && showDebugInfo)
+            {
+                Debug.Log($"Auto-found manual: {manualInteractable.gameObject.name}");
+            }
+        }
+
         // Ensure manual interaction starts disabled
         if (manualInteractable != null)
         {
@@ -84,7 +94,15 @@ public class LockerDoorController : MonoBehaviour
         if (playerTransform != null)
         {
             float distance = Vector3.Distance(transform.position, playerTransform.position);
+            bool wasInRange = isInRange;
             isInRange = distance <= interactionDistance;
+            
+            // Debug range changes
+            if (showDebugInfo && (wasInRange != isInRange || Time.frameCount % 60 == 0))
+            {
+                Debug.Log($"Range check - InRange: {isInRange}, Distance: {distance:F2}, InteractionDistance: {interactionDistance}");
+                Debug.Log($"Door position: {transform.position}, Player position: {playerTransform.position}");
+            }
         }
 
         // Handle door animation
@@ -98,21 +116,22 @@ public class LockerDoorController : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log($"LockerDoor GetInteractionPrompt - InRange: {isInRange}, IsAnimating: {isAnimating}, IsOpen: {isOpen}");
+            Debug.Log($"LockerDoor GetInteractionPrompt - IsAnimating: {isAnimating}, IsOpen: {isOpen}");
             if (manualInteractable != null)
             {
                 Debug.Log($"Manual available: {manualInteractable.IsManualAvailable()}");
             }
         }
 
-        if (!isInRange || isAnimating)
+        // First check - not in range or animating
+        if (isAnimating)
         {
             if (showDebugInfo)
                 Debug.Log("No prompt - not in range or animating");
             return "";
         }
 
-        // If door is closed, show open prompt
+        // Second check - door is closed, always show open prompt
         if (!isOpen)
         {
             if (showDebugInfo)
@@ -120,19 +139,33 @@ public class LockerDoorController : MonoBehaviour
             return openPrompt;
         }
         
-        // If door is open, check manual status
-        if (manualInteractable != null && manualInteractable.IsManualAvailable())
+        // Third check - door is open, check manual status
+        if (manualInteractable != null)
         {
-            // Manual is available, let manual interaction take priority
+            bool manualAvailable = manualInteractable.IsManualAvailable();
             if (showDebugInfo)
-                Debug.Log("Manual available - no door prompt");
-            return "";
+                Debug.Log($"Door open - Manual available: {manualAvailable}");
+                
+            if (manualAvailable)
+            {
+                // Manual is available, don't show door prompt (manual prompt will show instead)
+                if (showDebugInfo)
+                    Debug.Log("Manual available - no door prompt");
+                return "";
+            }
+            else
+            {
+                // Manual is taken, show close prompt
+                if (showDebugInfo)
+                    Debug.Log("Manual taken - showing close prompt");
+                return closePrompt;
+            }
         }
         else
         {
-            // Manual is taken or not available, show close prompt
+            // No manual reference, just show close prompt when open
             if (showDebugInfo)
-                Debug.Log("Showing close prompt");
+                Debug.Log("No manual reference - showing close prompt");
             return closePrompt;
         }
     }

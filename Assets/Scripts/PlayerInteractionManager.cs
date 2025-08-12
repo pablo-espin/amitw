@@ -10,6 +10,9 @@ public class PlayerInteractionManager : MonoBehaviour
     [SerializeField] private GameObject interactionPromptUI;
     [SerializeField] private TMPro.TextMeshProUGUI promptText;
     
+    [Header("Debug")]
+    [SerializeField] private bool showDebugInfo = false;
+
     private Camera playerCamera;
     private MemorySphere currentMemorySphere;
     private bool canInteract = true;
@@ -46,11 +49,15 @@ public class PlayerInteractionManager : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, interactionRange, interactableLayer))
         {
+            if (showDebugInfo)
+            {
+                Debug.Log($"Raycast hit: {hit.collider.gameObject.name} on layer {hit.collider.gameObject.layer}");
+            }
+
             // Check for memory sphere
             MemorySphere sphere = hit.collider.GetComponent<MemorySphere>();
             if (sphere != null && !sphere.IsDecrypted() && !sphere.IsCorrupted())
             {
-                // Show interaction prompt
                 ShowInteractionPrompt("Press E to interact with memory sphere");
                 return;
             }
@@ -87,27 +94,53 @@ public class PlayerInteractionManager : MonoBehaviour
                 return;
             }
             
-            // Check for locker door controller (NEW - high priority)
+            // Check for locker door controller (HIGH PRIORITY)
             LockerDoorController lockerDoor = hit.collider.GetComponent<LockerDoorController>();
             if (lockerDoor != null)
             {
+                if (showDebugInfo)
+                {
+                    Debug.Log($"Found LockerDoorController on {hit.collider.gameObject.name}");
+                }
+                
                 string prompt = lockerDoor.GetInteractionPrompt();
                 if (!string.IsNullOrEmpty(prompt))
                 {
+                    if (showDebugInfo)
+                    {
+                        Debug.Log($"LockerDoor prompt: '{prompt}'");
+                    }
                     ShowInteractionPrompt(prompt);
                     return;
                 }
+                else if (showDebugInfo)
+                {
+                    Debug.Log("LockerDoor returned empty prompt");
+                }
             }
             
-            // Check for manual interactable (MOVED AFTER locker door check)
+            // Check for manual interactable (AFTER locker door check)
             ManualInteractable manualObject = hit.collider.GetComponent<ManualInteractable>();
             if (manualObject != null)
             {
+                if (showDebugInfo)
+                {
+                    Debug.Log($"Found ManualInteractable on {hit.collider.gameObject.name}");
+                }
+                
                 string prompt = manualObject.GetInteractionPrompt();
                 if (!string.IsNullOrEmpty(prompt))
                 {
+                    if (showDebugInfo)
+                    {
+                        Debug.Log($"Manual prompt: '{prompt}'");
+                    }
                     ShowInteractionPrompt(prompt);
                     return;
+                }
+                else if (showDebugInfo)
+                {
+                    Debug.Log("Manual returned empty prompt");
                 }
             }
 
@@ -149,15 +182,13 @@ public class PlayerInteractionManager : MonoBehaviour
                     ShowInteractionPrompt(prompt);
                     return;
                 }
-                else
-                {
-                    // Still show we can interact (for locked door sound)
-                    // ShowInteractionPrompt("Press E to try door");
-                    return;
-                }
             }
 
             // If no valid interactable found, hide prompt
+            if (showDebugInfo)
+            {
+                Debug.Log($"No valid interactable found on {hit.collider.gameObject.name}");
+            }
             HideInteractionPrompt();
         }
         else
@@ -214,7 +245,7 @@ public class PlayerInteractionManager : MonoBehaviour
                 return;
             }
 
-            // Check for locker door controller (NEW - high priority)
+            // Check for locker door controller (HIGH PRIORITY)
             LockerDoorController lockerDoorController = hit.collider.GetComponent<LockerDoorController>();
             if (lockerDoorController != null)
             {
@@ -223,7 +254,7 @@ public class PlayerInteractionManager : MonoBehaviour
                 return;
             }
 
-            // Check for manual interactable (MOVED AFTER locker door check)
+            // Check for manual interactable (AFTER locker door check)
             ManualInteractable manualObject = hit.collider.GetComponent<ManualInteractable>();
             if (manualObject != null)
             {
@@ -268,16 +299,33 @@ public class PlayerInteractionManager : MonoBehaviour
     
     private void ShowInteractionPrompt(string message)
     {
+        if (showDebugInfo)
+        {
+            Debug.Log($"ShowInteractionPrompt called with: '{message}'");
+        }
+        
         if (interactionPromptUI != null)
         {
             interactionPromptUI.SetActive(true);
             if (promptText != null)
             {
                 promptText.text = message;
+                if (showDebugInfo)
+                {
+                    Debug.Log($"Prompt text set to: '{promptText.text}'");
+                }
+            }
+            else if (showDebugInfo)
+            {
+                Debug.LogError("PromptText is null!");
             }
         }
         else
         {
+            if (showDebugInfo)
+            {
+                Debug.LogError("InteractionPromptUI is null!");
+            }
             // Fallback to debug log if UI is not set up
             Debug.Log(message);
         }
