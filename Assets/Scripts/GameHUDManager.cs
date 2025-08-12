@@ -9,10 +9,6 @@ public class GameHUDManager : MonoBehaviour
 {
     [Header("Timer")]
     [SerializeField] private TextMeshProUGUI timerText;
-    [SerializeField] private float maxTime = 600f; // 10 minutes in seconds
-    private float currentTime;
-    private bool isTimerRunning = true;
-    private bool memoryDeleted = false;
 
     [Header("Lockdown System")]
     [SerializeField] private TextMeshProUGUI gameTimeText;
@@ -66,12 +62,9 @@ public class GameHUDManager : MonoBehaviour
     [Header("Clue System")]
     [SerializeField] private ClueProgressUI clueProgressUI;
     
-    [Header("Stats Tracking")]
-    private float energyUsed = 0f; // in kWh
-    private float computeTimeUsed = 0f; // in minutes
-    private int stepsTaken = 0;
-    private Vector3 lastPosition;
-    private float distanceTraveled = 0f; // in meters
+    [Header("Simplified Stats Display")]
+    [SerializeField] private PowerGaugeUI powerGauge;
+    [SerializeField] private MemoryHealthBar memoryHealthBar;
     
     // References for interaction
     private PlayerInteractionManager interactionManager;
@@ -85,12 +78,10 @@ public class GameHUDManager : MonoBehaviour
     // Code tracking
     private HashSet<string> usedCodes = new HashSet<string>();
     private Dictionary<string, bool> codeUsageStatus = new Dictionary<string, bool>();
+    private StatsSystem statsSystem;
 
     void Start()
     {
-        // Initialize timer - now using lockdown time instead of countdown
-        currentTime = 0f; // Start at 0, count up to lockdown time
-        
         // Initialize code tracking
         usedCodes = new HashSet<string>();
         codeUsageStatus = new Dictionary<string, bool>();
@@ -100,7 +91,7 @@ public class GameHUDManager : MonoBehaviour
         if (outcomePanel != null) outcomePanel.SetActive(false);
         if (errorText != null) errorText.gameObject.SetActive(false);
         if (timerExtensionText != null) timerExtensionText.gameObject.SetActive(false);
-        
+
         // Hide new lockdown panels
         if (lockdownWarningPanel != null) lockdownWarningPanel.SetActive(false);
         if (computerCodeChoicePanel != null) computerCodeChoicePanel.SetActive(false);
@@ -110,7 +101,7 @@ public class GameHUDManager : MonoBehaviour
         if (closeButton != null) closeButton.onClick.AddListener(CloseDecryptionPanel);
         if (learnMoreButton != null) learnMoreButton.onClick.AddListener(OnLearnMoreClicked);
         if (playAgainButton != null) playAgainButton.onClick.AddListener(OnPlayAgainClicked);
-        
+
         // Add new button listeners
         if (releaseMemoriesButton != null) releaseMemoriesButton.onClick.AddListener(OnReleaseMemoriesClicked);
         if (goBackButton != null) goBackButton.onClick.AddListener(OnGoBackClicked);
@@ -121,53 +112,33 @@ public class GameHUDManager : MonoBehaviour
         // Find references
         interactionManager = FindObjectOfType<PlayerInteractionManager>();
         uiInputController = FindObjectOfType<UIInputController>();
-        
+
         // Find lockdown manager
         lockdownManager = FindObjectOfType<LockdownManager>();
         if (lockdownManager == null)
         {
             Debug.LogError("LockdownManager not found! Make sure it exists in the scene.");
         }
-        
-        // Find the player for stats tracking
-        playerTransform = Camera.main.transform;
-        if (playerTransform != null)
-        {
-            lastPosition = playerTransform.position;
-        }
-        
-        // Start stats tracking
-        InvokeRepeating("UpdateStats", 1f, 1f);
-        
+
         // Initialize game time display
         UpdateGameTimeDisplay();
+
+        // Initialize simplified stats system
+        InitializeStatsSystem();
     }
 
     private void Update()
     {
-            // Update game time display instead of countdown timer
-            UpdateGameTimeDisplay();
+        // Update game time display
+        UpdateGameTimeDisplay();
     }
 
-    private void UpdateTimerDisplay()
+    private void OnDestroy()
     {
-        int minutes = Mathf.FloorToInt(currentTime / 60);
-        int seconds = Mathf.FloorToInt(currentTime % 60);
-        
-        if (timerText != null)
+        // Unsubscribe from memory health bar events
+        if (memoryHealthBar != null)
         {
-            timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
-
-            if (currentTime <= 60 && currentTime > 0) // Last minute
-            {
-                timerText.color = Color.red;
-            }
-            else if (currentTime <= 0)
-            {
-                // Keep showing 00:00 when timer is up
-                timerText.text = "00:00";
-                timerText.color = Color.red;
-            }
+            memoryHealthBar.OnMemoriesFullyDeleted -= OnMemoriesFullyDeleted;
         }
     }
 
@@ -206,6 +177,48 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
+    private void InitializeStatsSystem()
+    {
+        // Find or create StatsSystem
+        statsSystem = StatsSystem.Instance;
+        if (statsSystem == null)
+        {
+            GameObject statsGO = new GameObject("StatsSystem");
+            statsSystem = statsGO.AddComponent<StatsSystem>();
+            Debug.Log("Created new StatsSystem instance");
+        }
+
+        // Initialize power gauge
+        if (powerGauge != null)
+        {
+            Debug.Log("PowerGauge component found and ready");
+        }
+        else
+        {
+            Debug.LogWarning("PowerGauge component not assigned in GameHUDManager!");
+        }
+
+        // Initialize memory health bar and subscribe to deletion event
+        if (memoryHealthBar != null)
+        {
+            memoryHealthBar.OnMemoriesFullyDeleted += OnMemoriesFullyDeleted;
+            Debug.Log("MemoryHealthBar component found and subscribed to deletion event");
+        }
+        else
+        {
+            Debug.LogWarning("MemoryHealthBar component not assigned in GameHUDManager!");
+        }
+
+        Debug.Log("Simplified stats system initialized");
+    }
+
+    // Show trapped ending if memory integrity reaches 0
+    private void OnMemoriesFullyDeleted()
+    {
+        Debug.Log("All memories deleted - showing trapped ending");
+        ShowTrappedOutcome();
+    }
+
     public void ShowDecryptionPanel()
     {
         if (decryptionPanel != null)
@@ -224,15 +237,6 @@ public class GameHUDManager : MonoBehaviour
                 decryptionInput.ActivateInputField();
             }
         }
-
-        // Ensure cursor is visible and unlocked when panel is open
-        // Cursor.lockState = CursorLockMode.None;
-        // Cursor.visible = true;
-        // Use CursorManager instead
-        // if (CursorManager.Instance != null)
-        // {
-        //     CursorManager.Instance.RequestCursorUnlock("DecryptionPanel");
-        // }
 
         // Disable player movement
         if (interactionManager != null)
@@ -259,16 +263,6 @@ public class GameHUDManager : MonoBehaviour
                 UIStateManager.Instance.RegisterClosedUI("DecryptionPanel");
             }
         }
-
-        // Restore cursor state
-        // Cursor.lockState = CursorLockMode.Locked;
-        // Cursor.visible = false;
-
-        // Use CursorManager instead
-        // if (CursorManager.Instance != null)
-        // {
-        //     CursorManager.Instance.RequestCursorLock("DecryptionPanel");
-        // }
         
         // Re-enable player movement
         if (interactionManager != null)
@@ -399,12 +393,6 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
-    private void ExtendTimer(float extension, int codesUsed)
-    {
-        currentTime += extension;
-        Debug.Log($"Timer extended by {extension} seconds for {codesUsed} codes");
-    }
-
     private IEnumerator ShowWrongCodeFeedback(string message)
     {
         // Store original positions and colors
@@ -468,68 +456,8 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
-    private IEnumerator ShowCodeProgressFeedback(string message)
-    {
-        // Show code progress message
-        if (timerExtensionText != null)
-        {
-            timerExtensionText.gameObject.SetActive(true);
-            timerExtensionText.text = message;
-            timerExtensionText.color = new Color(0.2f, 0.6f, 1f); // Light blue color
-        }
-        
-        // Hide message after delay
-        yield return new WaitForSeconds(extensionDisplayTime);
-        if (timerExtensionText != null)
-        {
-            timerExtensionText.gameObject.SetActive(false);
-        }
-    }
-
-
-    // private void TimeUp()
-    // {
-    //     Debug.Log("TimeUp() method called");
-        // Stop the timer
-        // isTimerRunning = false;
-
-        // Set the deleted state
-        // memoryDeleted = true;
-
-        // Try to get the memory sphere through GetCurrentMemorySphere first
-        // MemorySphere sphere = null;
-
-        // if (interactionManager != null)
-        // {
-        //     sphere = interactionManager.GetCurrentMemorySphere();
-        //     Debug.Log("Using interactionManager.GetCurrentMemorySphere(): " + (sphere != null ? "Found" : "Not Found"));
-        // }
-
-        // If that didn't work, try to find it directly in the scene
-        // if (sphere == null)
-        // {
-        //     sphere = FindObjectOfType<MemorySphere>();
-        //     Debug.Log("Using FindObjectOfType<MemorySphere>(): " + (sphere != null ? "Found" : "Not Found"));
-        // }
-
-        // Now try to delete it
-    //     if (sphere != null)
-    //     {
-    //         sphere.Delete();
-    //         Debug.Log("Successfully called Delete() on memory sphere");
-    //     }
-    //     else
-    //     {
-    //         Debug.LogError("Could not find memory sphere to delete by any method");
-    //     }
-
-    //     Debug.Log("Timer reached zero - memory silently deleted");
-    // }
-
     private void ShowSuccessOutcome()
     {
-        isTimerRunning = false;
-        
         // Hide decryption panel
         if (decryptionPanel != null)
         {
@@ -548,35 +476,33 @@ public class GameHUDManager : MonoBehaviour
             interactionManager.DecryptCurrentSphere();
         }
         
-        // Show outcome panel
+        // Show outcome panel with regular stats
         ShowOutcomePanel(successTitle, successDescription, GenerateStats());
     }
     
     private void ShowCorruptionOutcome()
+    {
+        // Hide decryption panel
+        if (decryptionPanel != null)
         {
-            isTimerRunning = false;
-            
-            // Hide decryption panel
-            if (decryptionPanel != null)
-            {
-                decryptionPanel.SetActive(false);
+            decryptionPanel.SetActive(false);
 
-                // Make sure to unregister decryption panel if it was open
-                if (UIStateManager.Instance != null)
-                {
-                    UIStateManager.Instance.RegisterClosedUI("DecryptionPanel");
-                }            
-            }
-            
-            // Corrupt memory sphere
-            if (interactionManager != null)
+            // Make sure to unregister decryption panel if it was open
+            if (UIStateManager.Instance != null)
             {
-                interactionManager.CorruptCurrentSphere();
-            }
-            
-            // Show outcome panel
-            ShowOutcomePanel(corruptionTitle, corruptionDescription, GenerateStats());
+                UIStateManager.Instance.RegisterClosedUI("DecryptionPanel");
+            }            
         }
+        
+        // Corrupt memory sphere
+        if (interactionManager != null)
+        {
+            interactionManager.CorruptCurrentSphere();
+        }
+        
+        // Show outcome panel with regular stats
+        ShowOutcomePanel(corruptionTitle, corruptionDescription, GenerateStats());
+    }
         
     private void ShowComputerCodeChoice()
     {
@@ -665,12 +591,16 @@ public class GameHUDManager : MonoBehaviour
     
     public void ShowEscapeOutcome()
     {
-        ShowOutcomePanel(escapeTitle, escapeDescription, GenerateStats());
+        // Use contextual stats for escape ending
+        string contextualStats = GenerateStatsForEnding(isEscapeEnding: true);
+        ShowOutcomePanel(escapeTitle, escapeDescription, contextualStats);
     }
 
     public void ShowHeroicLockdownOutcome()
     {
-        ShowOutcomePanel(heroicLockdownTitle, heroicLockdownDescription, GenerateStats());
+        // Use contextual stats for heroic ending
+        string contextualStats = GenerateStatsForEnding(isHeroicEnding: true);
+        ShowOutcomePanel(heroicLockdownTitle, heroicLockdownDescription, contextualStats);
     }
 
     public void ShowTrappedOutcome()
@@ -680,6 +610,11 @@ public class GameHUDManager : MonoBehaviour
 
     private void ShowRebelliousOutcome()
     {
+        // Notify stats system of memory release (10x multiplier)
+        if (statsSystem != null)
+        {
+            statsSystem.OnMemoryReleased();
+        }
         ShowOutcomePanel(rebelliousTitle, rebelliousDescription, GenerateStats());
     }
 
@@ -711,16 +646,6 @@ public class GameHUDManager : MonoBehaviour
             }
         }
 
-        // Unlock cursor for UI interaction
-        // Cursor.lockState = CursorLockMode.None;
-        // Cursor.visible = true;
-
-        // Use CursorManager instead
-        // if (CursorManager.Instance != null)
-        // {
-        //     CursorManager.Instance.RequestCursorUnlock("OutcomePanel");
-        // }
-
         // Disable player movement
         if (interactionManager != null)
         {
@@ -745,43 +670,30 @@ public class GameHUDManager : MonoBehaviour
         StartCoroutine(ShowTimerExtensionFeedback($"Lockdown delayed by {extensionMinutes:F0} minutes!"));
     }
 
-    private void UpdateStats()
-    {
-        // Update compute time (1 second = 1 computation unit)
-        computeTimeUsed += 1f / 60f; // Convert to minutes
-
-        // Update energy usage (estimated based on time and movement)
-        energyUsed += 0.01f; // Base energy use
-
-        // Update steps/distance
-        if (playerTransform != null)
-        {
-            Vector3 currentPosition = playerTransform.position;
-            float distance = Vector3.Distance(lastPosition, currentPosition);
-
-            if (distance > 0.5f) // Minimum threshold to count as movement
-            {
-                distanceTraveled += distance;
-                stepsTaken++;
-            }
-
-            lastPosition = currentPosition;
-        }
-    }
-    
+    // Generate regular stats
     private string GenerateStats()
     {
-        string timeUsed = ((maxTime - currentTime) / 60f).ToString("F1");
-        string energyStr = energyUsed.ToString("F2");
-        string computeStr = computeTimeUsed.ToString("F1");
-        string stepsStr = stepsTaken.ToString();
-        string distanceStr = distanceTraveled.ToString("F1");
-        
-        return $"TIME SPENT: {timeUsed} minutes\n" +
-               $"ENERGY CONSUMED: {energyStr} kWh\n" +
-               $"COMPUTE TIME: {computeStr} minutes\n" +
-               $"STEPS TAKEN: {stepsStr}\n" +
-               $"DISTANCE TRAVELED: {distanceStr} meters";
+        if (statsSystem != null)
+        {
+            return statsSystem.GetFormattedStats();
+        }
+        else
+        {
+            return "Stats system not available";
+        }
+    }
+
+    // Generate contextual stats for different endings
+    private string GenerateStatsForEnding(bool isEscapeEnding = false, bool isHeroicEnding = false)
+    {
+        if (statsSystem != null)
+        {
+            return statsSystem.GetFormattedStats(isEscapeEnding, isHeroicEnding);
+        }
+        else
+        {
+            return "Stats system not available";
+        }
     }
 
     private string GenerateGarbledText()

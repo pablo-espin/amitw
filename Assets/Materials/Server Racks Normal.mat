@@ -110,24 +110,24 @@ Material:
     - _GlossyReflections: 0
     - _HDD1Intensity: 2
     - _HDD2Intensity: 3
-    - _HDDActiveIntensity: 3.32
-    - _HDDBaseIntensity: 1.552
+    - _HDDActiveIntensity: 3.54
+    - _HDDBaseIntensity: 1.311
     - _Metallic: 0
     - _Network1Intensity: 1
     - _Network2Intensity: 2
-    - _NetworkActiveIntensity: 2
-    - _NetworkBaseIntensity: 0.3
-    - _NetworkFlickerSpeed: 15
+    - _NetworkActiveIntensity: 5.38
+    - _NetworkBaseIntensity: 1.453
+    - _NetworkFlickerSpeed: 6.9
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _PowerBlinkMode: 0
     - _PowerBlinkSpeed: 0
     - _PowerLightEnabled: 1
-    - _PowerLightIntensity: 2
-    - _PowerPulseAmount: 0.2
-    - _PowerPulseSpeed: 0.5
+    - _PowerLightIntensity: 5.24
+    - _PowerPulseAmount: 0.221
+    - _PowerPulseSpeed: 0.1
     - _QueueOffset: 0
-    - _RandomSeed: 12345
+    - _RandomSeed: 32
     - _ReceiveShadows: 1
     - _ServerRows: 22
     - _Smoothness: 1
@@ -144,7 +144,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _HDDLightColor: {r: 0, g: 0.5, b: 1, a: 1}
     - _NetworkLightColor: {r: 1, g: 0.8, b: 0, a: 1}
-    - _PowerLightColor: {r: 0, g: 1, b: 0, a: 1}
+    - _PowerLightColor: {r: 0, g: 1, b: 0.068490505, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

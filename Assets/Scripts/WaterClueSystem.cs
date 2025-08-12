@@ -146,7 +146,13 @@ public class WaterClueSystem : MonoBehaviour
     private void CloseTap()
     {
         tapOpened = false;
-        
+
+        // Notify stats system that water tap stopped running
+        if (StatsSystem.Instance != null)
+        {
+            StatsSystem.Instance.OnWaterTapStateChanged(false);
+        }
+
         // Stop water flow
         if (waterFlowParticles)
         {
@@ -180,7 +186,13 @@ public class WaterClueSystem : MonoBehaviour
     {
         StartCoroutine(AnimateValveToPosition(false));
         valveOpened = false;
-        
+
+        // Notify stats system that water tap stopped running (valve closed = no flow)
+        if (StatsSystem.Instance != null)
+        {
+            StatsSystem.Instance.OnWaterTapStateChanged(false);
+        }
+
         // Stop water flow
         if (waterFlowParticles)
         {
@@ -207,13 +219,20 @@ public class WaterClueSystem : MonoBehaviour
         if (tapOpened && valveOpened)
         {
             Debug.Log("Starting water flow");
+            
+            // Notify stats system that water tap started running
+            if (StatsSystem.Instance != null)
+            {
+                StatsSystem.Instance.OnWaterTapStateChanged(true);
+            }
+
             // Start water flow
-            if (waterFlowParticles) 
+            if (waterFlowParticles)
             {
                 waterFlowParticles.gameObject.SetActive(true);
                 waterFlowParticles.Play();
                 Debug.Log("Water flow effect activated");
-                
+
                 // Start water running sound with position
                 if (InteractionSoundManager.Instance != null)
                 {

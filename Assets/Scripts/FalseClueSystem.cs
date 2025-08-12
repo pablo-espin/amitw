@@ -220,6 +220,13 @@ public class FalseClueSystem : MonoBehaviour
         captchaSolved = true;
         computerLocked = true;
 
+        // Notify stats system of CAPTCHA solving
+        if (StatsSystem.Instance != null)
+        {
+            StatsSystem.Instance.OnCaptchaSolved();
+            Debug.Log("Notified StatsSystem of CAPTCHA solution - power increased to 4x base");
+        }
+
         // Trigger dialogue for solving the CAPTCHA
         if (GameInteractionDialogueManager.Instance != null)
         {

@@ -258,7 +258,14 @@ public class ElectricityClueSystem : MonoBehaviour
     private void PowerOn()
     {
         Debug.Log("PowerOn() called - starting power sequence");
-        
+
+        // Notify stats system of electricity connection
+        if (StatsSystem.Instance != null)
+        {
+            StatsSystem.Instance.OnElectricityConnected();
+            Debug.Log("Notified StatsSystem of electricity connection");
+        }
+
         // Trigger dialogue for electricity connection
         if (GameInteractionDialogueManager.Instance != null)
         {

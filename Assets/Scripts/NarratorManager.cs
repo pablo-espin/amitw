@@ -166,25 +166,20 @@ public class NarratorManager : MonoBehaviour
         fadeCoroutine = null;
     }
     
-    /// <summary>
-    /// Check if a specific dialogue has been played already
-    /// </summary>
+    // Check if a specific dialogue has been played already
     public bool HasDialoguePlayed(string dialogueID)
     {
         return !string.IsNullOrEmpty(dialogueID) && playedDialogueIDs.Contains(dialogueID);
     }
     
-    /// <summary>
-    /// Check if any dialogue is currently playing
-    /// </summary>
+
+    // Check if any dialogue is currently playing
     public bool IsPlaying()
     {
         return narratorSource.isPlaying;
     }
     
-    /// <summary>
-    /// Stop any currently playing dialogue
-    /// </summary>
+    // Stop any currently playing dialogue
     public void StopDialogue()
     {
         if (fadeCoroutine != null)
@@ -197,9 +192,7 @@ public class NarratorManager : MonoBehaviour
         currentlyPlaying = null;
     }
     
-    /// <summary>
-    /// Reset the narrator state (clear played dialogues)
-    /// </summary>
+    // Reset the narrator state (clear played dialogues)
     public void ResetState()
     {
         playedDialogueIDs.Clear();
