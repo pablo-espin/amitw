@@ -65,6 +65,10 @@ public class GameHUDManager : MonoBehaviour
     [Header("Simplified Stats Display")]
     [SerializeField] private PowerGaugeUI powerGauge;
     [SerializeField] private MemoryHealthBar memoryHealthBar;
+
+    [Header("Game Pause Settings")]
+    [SerializeField] private bool gameIsPaused = false;
+    private float originalTimeScale = 1f;
     
     // References for interaction
     private PlayerInteractionManager interactionManager;
@@ -643,35 +647,147 @@ public class GameHUDManager : MonoBehaviour
         }
 
         if (outcomePanel != null)
+        {
+            outcomePanel.SetActive(true);
+
+            // Register with UI state manager
+            if (UIStateManager.Instance != null)
             {
-                outcomePanel.SetActive(true);
-
-                // Register with UI state manager
-                if (UIStateManager.Instance != null)
-                {
-                    UIStateManager.Instance.RegisterOpenUI("OutcomePanel");
-                }
-
-                if (outcomeTitle != null)
-                {
-                    outcomeTitle.text = title;
-                }
-
-                if (outcomeDescription != null)
-                {
-                    outcomeDescription.text = description;
-                }
-
-                if (statsText != null)
-                {
-                    statsText.text = stats;
-                }
+                UIStateManager.Instance.RegisterOpenUI("OutcomePanel");
             }
 
-        // Disable player movement
+            if (outcomeTitle != null)
+            {
+                outcomeTitle.text = title;
+            }
+
+            if (outcomeDescription != null)
+            {
+                outcomeDescription.text = description;
+            }
+
+            if (statsText != null)
+            {
+                statsText.text = stats;
+            }
+        }
+
+        // Pause the game
+        PauseGame();
+    }
+
+    private void PauseGame()
+    {
+        if (gameIsPaused) return;
+        
+        gameIsPaused = true;
+        originalTimeScale = Time.timeScale;
+        
+        // Pause game simulation
+        Time.timeScale = 0f;
+        
+        // Disable player movement and interactions
         if (interactionManager != null)
         {
             interactionManager.SetInteractionEnabled(false);
+        }
+        
+        // Disable UI input for gameplay
+        if (uiInputController != null)
+        {
+            uiInputController.DisableGameplayInput();
+        }
+        
+        // Unlock cursor for outcome panel interaction
+        if (CursorManager.Instance != null)
+        {
+            CursorManager.Instance.RequestCursorUnlock("OutcomePanel");
+        }
+        
+        // Pause specific audio sources (keep UI sounds)
+        PauseGameAudio();
+        
+        // Stop any ongoing timers
+        if (lockdownManager != null)
+        {
+            lockdownManager.PauseTimer();
+        }
+    }
+
+    public void ResumeGame()
+    {
+        if (!gameIsPaused) return;
+        
+        gameIsPaused = false;
+        
+        // Resume game simulation
+        Time.timeScale = originalTimeScale;
+        
+        // Re-enable player movement and interactions
+        if (interactionManager != null)
+        {
+            interactionManager.SetInteractionEnabled(true);
+        }
+        
+        // Re-enable UI input for gameplay
+        if (uiInputController != null)
+        {
+            uiInputController.EnableGameplayInput();
+        }
+        
+        // Lock cursor back for gameplay
+        if (CursorManager.Instance != null)
+        {
+            CursorManager.Instance.ForceLockCursor();
+        }
+        
+        // Resume game audio
+        ResumeGameAudio();
+        
+        // Resume timers
+        if (lockdownManager != null)
+        {
+            lockdownManager.ResumeTimer();
+        }
+    }
+
+    private void PauseGameAudio()
+    {
+        // Pause narrator and ambient sounds
+        if (NarratorManager.Instance != null)
+        {
+            NarratorManager.Instance.PauseAudio();
+        }
+        
+        // Pause any looping sound effects
+        var audioSources = FindObjectsOfType<AudioSource>();
+        foreach (var source in audioSources)
+        {
+            // Only pause non-UI audio sources that are currently playing
+            if (source.isPlaying && !source.gameObject.name.Contains("UI"))
+            {
+                source.Pause();
+            }
+        }
+    }
+
+    private void ResumeGameAudio()
+    {
+        // Resume narrator and ambient sounds
+        if (NarratorManager.Instance != null)
+        {
+            NarratorManager.Instance.ResumeAudio();
+        }
+        
+        // Resume any paused sound effects
+        var audioSources = FindObjectsOfType<AudioSource>();
+        foreach (var source in audioSources)
+        {
+            // Only resume non-UI audio sources that were paused
+            if (!source.isPlaying && !source.gameObject.name.Contains("UI"))
+            {
+                source.UnPause();
+            }
         }
     }
 
@@ -682,14 +798,38 @@ public class GameHUDManager : MonoBehaviour
     
     private void OnPlayAgainClicked()
     {
-        // Reset stats system before reloading scene
-        if (statsSystem != null)
+        // Use the GameManager's restart method for proper state management
+        if (GameManager.Instance != null)
         {
-            statsSystem.ResetStats();
+            GameManager.Instance.RestartGame();
         }
+        else
+        {
+            // Fallback if GameManager isn't available
+            Time.timeScale = 1f;
+            if (CursorManager.Instance != null)
+            {
+                CursorManager.Instance.ForceLockCursor();
+            }
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+    }
 
-        // Reload the current scene
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    // Call this if player wants to close outcome panel and continue playing
+    public void CloseOutcomePanel()
+    {
+        if (outcomePanel != null)
+        {
+            outcomePanel.SetActive(false);
+            
+            // Unregister from UI state manager
+            if (UIStateManager.Instance != null)
+            {
+                UIStateManager.Instance.RegisterClosedUI("OutcomePanel");
+            }
+        }
+        
+        ResumeGame();
     }
 
     public void OnLockdownTimeExtended(float extensionTime)

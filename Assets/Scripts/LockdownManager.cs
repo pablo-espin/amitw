@@ -47,6 +47,8 @@ public class LockdownManager : MonoBehaviour
     private bool lockdownStarted = false;
     private int codesEnteredCount = 0;
     private Coroutine ambientSoundCoroutine;
+    private bool isPaused = false;
+    private float pausedTimeRemaining;
     
     // References
     private GameHUDManager hudManager;
@@ -89,44 +91,73 @@ public class LockdownManager : MonoBehaviour
     
     private void Update()
     {
-        if (!lockdownStarted)
+        // Only update timer if not paused
+        if (!isPaused)
         {
-            lockdownTimer += Time.deltaTime;
-            
-            // Check if lockdown time has been reached
-            if (lockdownTimer >= totalLockdownTime)
+            if (!lockdownStarted)
             {
-                InitiateLockdown();
+                // Pre-lockdown phase: count up to lockdown time
+                lockdownTimer += Time.deltaTime;
+                
+                // Check if lockdown time has been reached
+                if (lockdownTimer >= totalLockdownTime)
+                {
+                    InitiateLockdown();
+                }
             }
-        }
-        else
-        {
-            // Handle lockdown phases
-            float timeSinceLockdown = lockdownTimer - totalLockdownTime;
-            
-            if (currentPhase == LockdownPhase.EscapeWindow && timeSinceLockdown >= escapeWindowDuration)
+            else
             {
-                StartFinalLockdown();
+                // Post-lockdown phase: handle lockdown phases
+                lockdownTimer += Time.deltaTime;
+                float timeSinceLockdown = lockdownTimer - totalLockdownTime;
+                
+                // Check for phase transitions
+                if (currentPhase == LockdownPhase.EscapeWindow && 
+                    timeSinceLockdown >= escapeWindowDuration)
+                {
+                    StartFinalLockdown();
+                }
+                else if (currentPhase == LockdownPhase.FinalLockdown && 
+                         timeSinceLockdown >= escapeWindowDuration + finalPhaseDuration)
+                {
+                    EndGame();
+                }
             }
-            else if (currentPhase == LockdownPhase.FinalLockdown && timeSinceLockdown >= escapeWindowDuration + finalPhaseDuration)
-            {
-                EndGame();
-            }
-            
-            lockdownTimer += Time.deltaTime;
         }
     }
     
+    public void PauseTimer()
+    {
+        if (!isPaused)
+        {
+            isPaused = true;
+            // Store current time remaining when paused
+            pausedTimeRemaining = lockdownTimer;
+            Debug.Log($"LockdownManager paused at {FormatGameTime(lockdownTimer)}");
+        }
+    }
+    
+    public void ResumeTimer()
+    {
+        if (isPaused)
+        {
+            isPaused = false;
+            // Restore the time remaining from when we paused
+            lockdownTimer = pausedTimeRemaining;
+            Debug.Log($"LockdownManager resumed at {FormatGameTime(lockdownTimer)}");
+        }
+    }
+
     public void OnCodeEntered()
     {
         codesEnteredCount++;
-        
+
         // Only give extensions for first two codes
         if (codesEnteredCount <= 2)
         {
             totalLockdownTime += timeExtensionPerCode;
-            Debug.Log($"Code entered! Lockdown extended by {timeExtensionPerCode/60f} minutes. New lockdown time: {FormatGameTime(totalLockdownTime)}");
-            
+            Debug.Log($"Code entered! Lockdown extended by {timeExtensionPerCode / 60f} minutes. New lockdown time: {FormatGameTime(totalLockdownTime)}");
+
             // Notify HUD of time extension
             if (hudManager != null)
             {

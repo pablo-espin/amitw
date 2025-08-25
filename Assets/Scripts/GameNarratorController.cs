@@ -108,10 +108,6 @@ public class GameNarratorController : MonoBehaviour
                 Debug.Log($"Playing narrative event: {narrativeEvent.eventName} at {gameTimer} seconds");
             }
         }
-        else
-        {
-            Debug.LogWarning($"Could not play narrative event: {narrativeEvent.eventName}. NarratorManager not found or audio clip not set.");
-        }
     }
 
     public void StartTimer()

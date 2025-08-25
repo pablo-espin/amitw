@@ -30,6 +30,16 @@ public class UIInputController : MonoBehaviour
         }
     }
     
+    private void Start()
+    {
+        // Ensure input is enabled when scene starts (for restarts)
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameManager.GameState.Gameplay)
+        {
+            // We're in gameplay mode, make sure input is enabled
+            EnableGameplayInput();
+        }
+    }
+
     public void EnableGameplayInput()
     {
         // Set the static flag to block camera movement
@@ -39,19 +49,21 @@ public class UIInputController : MonoBehaviour
         {
             // First re-enable input system
             playerInput.enabled = true;
-            
+
             // Then switch back to gameplay controls
             if (!string.IsNullOrEmpty(defaultActionMap))
             {
-                try {
+                try
+                {
                     playerInput.SwitchCurrentActionMap(defaultActionMap);
                 }
-                catch (System.Exception e) {
+                catch (System.Exception e)
+                {
                     Debug.LogWarning("Could not switch action map: " + e.Message);
                 }
             }
         }
-        
+
         if (starterAssetsInputs != null)
         {
             // Reset any input values
@@ -59,17 +71,17 @@ public class UIInputController : MonoBehaviour
             starterAssetsInputs.move = Vector2.zero;
             starterAssetsInputs.jump = false;
             starterAssetsInputs.sprint = false;
-            
+
             // Re-enable cursor look
             starterAssetsInputs.cursorInputForLook = true;
         }
-        
+
         if (firstPersonController != null)
         {
             // Re-enable controller
             firstPersonController.enabled = true;
         }
-        
+
         // Lock cursor for gameplay
         // Cursor.lockState = CursorLockMode.Locked;
         // Cursor.visible = false;

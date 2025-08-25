@@ -290,17 +290,25 @@ public class PauseMenuManager : MonoBehaviour
 
     private void RestartGame()
     {
-        // Resume time scale before reloading
-        Time.timeScale = 1f;
-
-        // Reset cursor state before scene reload
-        if (CursorManager.Instance != null)
+        // Use GameManager's restart method
+        if (GameManager.Instance != null)
         {
-            CursorManager.Instance.ForceLockCursor();
-        }        
-        
-        // Reload the current scene
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            GameManager.Instance.RestartGame();
+        }
+        else
+        {
+            // Fallback approach
+            Time.timeScale = 1f;
+            
+            // Reset cursor state before scene reload
+            if (CursorManager.Instance != null)
+            {
+                CursorManager.Instance.ForceLockCursor();
+            }        
+            
+            // Reload the current scene
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
     }
 
     private void ExitGame()

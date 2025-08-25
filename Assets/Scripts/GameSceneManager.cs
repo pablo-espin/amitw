@@ -72,7 +72,26 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene("EndScreen");
     }
 
-    private void ChangeState(GameState newState)
+    // Public method for restarting the game from within gameplay
+    public void RestartGame()
+    {
+        // Set the state to gameplay (not HomeScreen) since we're reloading the game level
+        ChangeState(GameState.Gameplay);
+        
+        // Force cursor to be locked for gameplay
+        if (CursorManager.Instance != null)
+        {
+            CursorManager.Instance.ForceLockCursor();
+        }
+        
+        // Make sure time scale is reset
+        Time.timeScale = 1f;
+        
+        // Reload the current scene
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void ChangeState(GameState newState)
     {
         CurrentState = newState;
         OnGameStateChanged?.Invoke(newState);
