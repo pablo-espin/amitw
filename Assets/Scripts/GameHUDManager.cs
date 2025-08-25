@@ -216,6 +216,13 @@ public class GameHUDManager : MonoBehaviour
     private void OnMemoriesFullyDeleted()
     {
         Debug.Log("All memories deleted - showing trapped ending");
+
+        // Stop stats tracking when memories are fully deleted
+        if (statsSystem != null)
+        {
+            statsSystem.StopStatsTracking();
+        }
+
         ShowTrappedOutcome();
     }
 
@@ -615,36 +622,51 @@ public class GameHUDManager : MonoBehaviour
         {
             statsSystem.OnMemoryReleased();
         }
+
+        // Generate stats before stopping tracking to get the final values with multiplier
+        string finalStats = GenerateStats();
+    
+        // Stop stats tracking after getting final stats
+        if (statsSystem != null)
+        {
+            statsSystem.StopStatsTracking();
+        }
+
         ShowOutcomePanel(rebelliousTitle, rebelliousDescription, GenerateStats());
     }
 
     private void ShowOutcomePanel(string title, string description, string stats)
     {
-        if (outcomePanel != null)
+        if (statsSystem != null)
         {
-            outcomePanel.SetActive(true);
-
-            // Register with UI state manager
-            if (UIStateManager.Instance != null)
-            {
-                UIStateManager.Instance.RegisterOpenUI("OutcomePanel");
-            }
-
-            if (outcomeTitle != null)
-            {
-                outcomeTitle.text = title;
-            }
-
-            if (outcomeDescription != null)
-            {
-                outcomeDescription.text = description;
-            }
-
-            if (statsText != null)
-            {
-                statsText.text = stats;
-            }
+            statsSystem.StopStatsTracking();
         }
+
+        if (outcomePanel != null)
+            {
+                outcomePanel.SetActive(true);
+
+                // Register with UI state manager
+                if (UIStateManager.Instance != null)
+                {
+                    UIStateManager.Instance.RegisterOpenUI("OutcomePanel");
+                }
+
+                if (outcomeTitle != null)
+                {
+                    outcomeTitle.text = title;
+                }
+
+                if (outcomeDescription != null)
+                {
+                    outcomeDescription.text = description;
+                }
+
+                if (statsText != null)
+                {
+                    statsText.text = stats;
+                }
+            }
 
         // Disable player movement
         if (interactionManager != null)
@@ -660,6 +682,12 @@ public class GameHUDManager : MonoBehaviour
     
     private void OnPlayAgainClicked()
     {
+        // Reset stats system before reloading scene
+        if (statsSystem != null)
+        {
+            statsSystem.ResetStats();
+        }
+
         // Reload the current scene
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
