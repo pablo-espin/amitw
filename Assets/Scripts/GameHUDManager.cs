@@ -303,7 +303,7 @@ public class GameHUDManager : MonoBehaviour
         string falseClueCode = clueCodes[3];
 
         // Check for computer code first
-        if (!string.IsNullOrEmpty(falseClueCode) && input.Contains(falseClueCode))
+        if (!string.IsNullOrEmpty(falseClueCode) && input.ToUpper().Contains(falseClueCode.ToUpper()))
         {
             computerCodeEntered = true;
             
@@ -321,9 +321,9 @@ public class GameHUDManager : MonoBehaviour
         }
 
         // Check legitimate codes
-        bool waterCodeUsed = !string.IsNullOrEmpty(waterClueCode) && input.Contains(waterClueCode);
-        bool electricityCodeUsed = !string.IsNullOrEmpty(electricityClueCode) && input.Contains(electricityClueCode);
-        bool locationCodeUsed = !string.IsNullOrEmpty(locationClueCode) && input.Contains(locationClueCode);
+        bool waterCodeUsed = !string.IsNullOrEmpty(waterClueCode) && input.ToUpper().Contains(waterClueCode.ToUpper());
+        bool electricityCodeUsed = !string.IsNullOrEmpty(electricityClueCode) && input.ToUpper().Contains(electricityClueCode.ToUpper());
+        bool locationCodeUsed = !string.IsNullOrEmpty(locationClueCode) && input.ToUpper().Contains(locationClueCode.ToUpper());
         
         int validCodesUsed = 0;
         
