@@ -24,6 +24,10 @@ public class ManualSystem : MonoBehaviour
     [Header("Map Elements")]
     [SerializeField] private RectTransform playerMarker;
     [SerializeField] private RectTransform mapRect; // The rect transform of the map area
+
+    [Header("Player Arrow Components")]
+    [SerializeField] private PlayerMapArrow playerArrow; // Arrow component
+    [SerializeField] private SimpleStaticCircle staticCircle; // Static circle effect
     
     // Page tracking
     private int currentPageIndex = 0;
@@ -40,6 +44,23 @@ public class ManualSystem : MonoBehaviour
         playerTransform = Camera.main.transform;
         uiInputController = FindObjectOfType<UIInputController>();
         
+        // Initialize arrow and circle components if not assigned
+        if (playerArrow == null && playerMarker != null)
+        {
+            playerArrow = playerMarker.GetComponentInChildren<PlayerMapArrow>();
+        }
+        
+        if (staticCircle == null && playerMarker != null)
+        {
+            staticCircle = playerMarker.GetComponentInChildren<SimpleStaticCircle>();
+        }
+        
+        // Set camera reference for the arrow
+        if (playerArrow != null && playerTransform != null)
+        {
+            playerArrow.SetCameraTransform(playerTransform);
+        }
+
         // Setup UI
         if (closeButton != null)
             closeButton.onClick.AddListener(CloseManual);
@@ -62,17 +83,6 @@ public class ManualSystem : MonoBehaviour
         UpdatePageDisplay();
     }
     
-    // void Update()
-    // {
-    //     // Check for M key press to open manual directly to map page
-    //     if (manualFound && Input.GetKeyDown(KeyCode.M))
-    //     {
-    //         ShowMap();
-    //     }
-        
-    //     // Update player marker position on the map if visible
-    //     UpdatePlayerMarker();
-    // }
     void Update()
     {
         // Check for M key press to open manual directly to map page
@@ -121,16 +131,6 @@ public class ManualSystem : MonoBehaviour
         if (interactionManager != null)
             interactionManager.SetInteractionEnabled(false);
         
-        // Unlock cursor for UI interaction
-        //Cursor.lockState = CursorLockMode.None;
-        //Cursor.visible = true;
-
-        // Use CursorManager instead
-        // if (CursorManager.Instance != null)
-        // {
-        //     CursorManager.Instance.RequestCursorUnlock("ManualSystem");
-        // }
-
         // Disable player input
         if (uiInputController != null)
             uiInputController.DisableGameplayInput();
@@ -156,37 +156,24 @@ public class ManualSystem : MonoBehaviour
             if (mapPageIndex >= 0 && mapPageIndex < manualPages.Count)
             {
                 currentPageIndex = mapPageIndex;
-                Debug.Log($"Opening map page (index: {mapPageIndex})");
+                UpdatePageDisplay();
             }
             else
             {
                 Debug.LogWarning($"Map page index {mapPageIndex} is out of range (0-{manualPages.Count-1})");
-                currentPageIndex = 0; // Fallback to first page
             }
-            
-            UpdatePageDisplay();
         }
         
         // Disable player interaction during document view
         if (interactionManager != null)
             interactionManager.SetInteractionEnabled(false);
-        
-        // Unlock cursor for UI interaction
-        // Cursor.lockState = CursorLockMode.None;
-        // Cursor.visible = true;
-
-        // Use CursorManager instead
-        // if (CursorManager.Instance != null)
-        // {
-        //     CursorManager.Instance.RequestCursorUnlock("ManualSystem");
-        // }
 
         // Disable player input
         if (uiInputController != null)
             uiInputController.DisableGameplayInput();
     }
     
-    // Close the manual UI
+    // Close the manual
     public void CloseManual()
     {        
         if (manualPanel != null)
@@ -202,16 +189,6 @@ public class ManualSystem : MonoBehaviour
         if (interactionManager != null)
             interactionManager.SetInteractionEnabled(true);
         
-        // Re-lock cursor for gameplay
-        // Cursor.lockState = CursorLockMode.Locked;
-        // Cursor.visible = false;
-
-        // Use CursorManager instead
-        // if (CursorManager.Instance != null)
-        // {
-        //     CursorManager.Instance.RequestCursorLock("ManualSystem");
-        // }
-
         // Enable player input
         if (uiInputController != null)
             uiInputController.EnableGameplayInput();
@@ -220,7 +197,7 @@ public class ManualSystem : MonoBehaviour
         if (manualFound && mapHUDIndicator != null && !mapHUDIndicator.activeSelf)
         {
             mapHUDIndicator.SetActive(true);
-            
+
             // Trigger pulse effect to draw attention to the indicator
             ManualHUDIndicator indicatorScript = mapHUDIndicator.GetComponent<ManualHUDIndicator>();
             if (indicatorScript != null)
@@ -267,9 +244,10 @@ public class ManualSystem : MonoBehaviour
         // Show/hide player marker based on whether this is the map page
         if (playerMarker != null)
         {
-            // Only show the marker on the map page - very important!
+            // Only show the marker on the map page
             bool isMapPage = (currentPageIndex == mapPageIndex);
             playerMarker.gameObject.SetActive(isMapPage);
+
             Debug.Log($"Player marker visibility set to: {isMapPage} (Page {currentPageIndex + 1}, Map page is {mapPageIndex + 1})");
         }
             
@@ -277,57 +255,58 @@ public class ManualSystem : MonoBehaviour
         if (currentPageIndex == mapPageIndex && playerMarker != null && playerMarker.gameObject.activeSelf)
             UpdatePlayerMarker();
     }
-    
+
     // Update the player marker on the map
     private void UpdatePlayerMarker()
     {
         // Basic validation - if any required component is null or conditions aren't met
         if (playerMarker == null || mapRect == null || !manualPanel.activeSelf || currentPageIndex != mapPageIndex || playerTransform == null)
             return;
-        
+
         // World coordinates of the level bounds
         float worldMinX = -15.54f;  // West
         float worldMaxX = 10.67f;   // East
         float worldMinZ = -21.77f;  // South
         float worldMaxZ = 34f;      // North
-        
+
         // UI coordinates of the map within ContentImage (in pixels)
-        float mapMinX = 214f-875f;   // Left of map (corresponds to South in world)
-        float mapMaxX = 1635f-855f;  // Right of map (corresponds to North in world)
-        float mapMinY = 73f-450f;    // Bottom of map (corresponds to East in world)
-        float mapMaxY = 804f-530f;   // Top of map (corresponds to West in world)
-        
+        float mapMinX = 214f - 875f;   // Left of map (corresponds to South in world)
+        float mapMaxX = 1635f - 855f;  // Right of map (corresponds to North in world)
+        float mapMinY = 73f - 450f;    // Bottom of map (corresponds to East in world)
+        float mapMaxY = 804f - 530f;   // Top of map (corresponds to West in world)
+
         // Calculate dimensions
         float worldWidth = worldMaxX - worldMinX;
         float worldHeight = worldMaxZ - worldMinZ;
         float mapWidth = mapMaxX - mapMinX;
         float mapHeight = mapMaxY - mapMinY;
-        
+
         // Get player position in world space
         float playerX = playerTransform.position.x;
         float playerZ = playerTransform.position.z;
-        
+
         // Normalize player position in world space (0-1 range)
         float normalizedX = (playerX - worldMinX) / worldWidth;  // How far east (0 = west, 1 = east)
         float normalizedZ = (playerZ - worldMinZ) / worldHeight; // How far north (0 = south, 1 = north)
-        
+
         // Clamp to ensure marker stays within map bounds
-        normalizedX = Mathf.Clamp01(normalizedX);
-        normalizedZ = Mathf.Clamp01(normalizedZ);
-        
+        // normalizedX = Mathf.Clamp01(normalizedX);
+        // normalizedZ = Mathf.Clamp01(normalizedZ);
+
         // Apply 90-degree clockwise rotation mapping:
         // - World X (east-west) maps to UI Y (top-bottom) with inverted mapping (west=top, east=bottom)
         // - World Z (north-south) maps to UI X (left-right) with direct mapping (south=left, north=right)
         float pixelX = mapMinX + (normalizedZ * mapWidth);    // Map Z to X (south=left, north=right)
         float pixelY = mapMaxY - (normalizedX * mapHeight);   // Map X to Y inverted (west=top, east=bottom)
-        
+
         // Apply position directly to the player marker
         playerMarker.anchoredPosition = new Vector2(pixelX, pixelY);
         
-        // Debug output
-        // Debug.Log($"Player world: ({playerX}, {playerZ}), " +
-        //           $"Normalized: ({normalizedX}, {normalizedZ}), " +
-        //           $"Pixel: ({pixelX}, {pixelY})");
+        // Update arrow direction using the new component
+        if (playerArrow != null)
+        {
+            playerArrow.UpdateArrowDirection();
+        }
     }
     
     // Check if the manual has been found
