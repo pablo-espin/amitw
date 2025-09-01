@@ -567,7 +567,7 @@ public class GameHUDManager : MonoBehaviour
         ShowRebelliousOutcome();
     }
 
-    private void OnGoBackClicked()
+    public void OnGoBackClicked()
     {
         // Hide choice panel
         if (computerCodeChoicePanel != null)

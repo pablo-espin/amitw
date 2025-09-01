@@ -82,11 +82,7 @@ public class UIInputController : MonoBehaviour
             firstPersonController.enabled = true;
         }
 
-        // Lock cursor for gameplay
-        // Cursor.lockState = CursorLockMode.Locked;
-        // Cursor.visible = false;
-
-        // Use CursorManager instead
+        // Use CursorManager to lock cursor
         if (CursorManager.Instance != null)
         {
             CursorManager.Instance.RequestCursorLock("UIInputController");
@@ -124,12 +120,8 @@ public class UIInputController : MonoBehaviour
             // Disable the controller completely
             firstPersonController.enabled = false;
         }
-        
-        // Unlock cursor for UI
-        // Cursor.lockState = CursorLockMode.None;
-        // Cursor.visible = true;
 
-        // Use CursorManager instead
+        // Use CursorManager to unlock cursor
         if (CursorManager.Instance != null)
         {
             CursorManager.Instance.RequestCursorUnlock("UIInputController");

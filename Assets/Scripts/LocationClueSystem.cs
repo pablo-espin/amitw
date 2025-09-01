@@ -163,7 +163,7 @@ public class LocationClueSystem : MonoBehaviour
         }
     }
     
-    private void CloseDocumentView()
+    public void CloseDocumentView()
     {
         // Hide the document view
         if (documentViewPanel != null)
