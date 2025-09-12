@@ -54,6 +54,10 @@ public class InteractionSoundManager : MonoBehaviour
     [SerializeField] private InteractionSoundCategory lockerDoorOpen;
     [SerializeField] private InteractionSoundCategory lockerDoorClose;
 
+    [Header("Footstep Sounds")]
+    [SerializeField] private InteractionSoundCategory walkingFootsteps;
+    [SerializeField] private InteractionSoundCategory runningFootsteps;
+
 
     [Header("Settings")]
     [SerializeField] private int audioSourcePoolSize = 5;
@@ -394,6 +398,17 @@ public class InteractionSoundManager : MonoBehaviour
     public void PlayLockerDoorClose()
     {
         PlaySound(lockerDoorClose);
+    }
+
+    // Footstep System
+    public void PlayWalkingFootstep()
+    {
+        PlaySound(walkingFootsteps);
+    }
+
+    public void PlayRunningFootstep()
+    {
+        PlaySound(runningFootsteps);
     }
 
     // Method to set master volume
