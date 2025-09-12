@@ -1,14 +1,15 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic;
 
 public class LockdownManager : MonoBehaviour
 {
     [Header("Lockdown Timing")]
     [SerializeField] private float baseLockdownTime = 900f; // 15 minutes in seconds
     [SerializeField] private float escapeWindowDuration = 60f; // 1 minute
-    [SerializeField] private float finalPhaseDuration = 300f; // 5 minutes
-    [SerializeField] private float timeExtensionPerCode = 120f; // 2 minutes per code
+    [SerializeField] private float finalPhaseDuration = 540f; // 9 minutes
+    [SerializeField] private float timeExtensionPerCode = 60f; // 1 minute per code
     
     [Header("Lighting System")]
     [SerializeField] private Material[] normalServerMaterials; // Original blue materials
@@ -18,6 +19,13 @@ public class LockdownManager : MonoBehaviour
     [SerializeField] private Color normalLightColor = Color.blue;
     [SerializeField] private Color lockdownLightColor = Color.red;
     [SerializeField] private float lightTransitionDuration = 2f;
+
+    [Header("Ceiling Light System")]
+    [SerializeField] private Material[] normalCeilingLightMaterials; // Lights turned on material
+    [SerializeField] private Material[] lockdownCeilingLightMaterials; // Lights turned off material  
+    [SerializeField] private MeshRenderer[] ceilingLightRenderers; // Objects using ceiling light materials
+    [SerializeField] private float ceilingLightFadeDuration = 1.5f; // How long the emission fade takes
+    [SerializeField] private bool useCeilingLightFade = true; // Toggle the effect
     
     [Header("Post Processing")]
     [SerializeField] private UnityEngine.Rendering.Universal.ColorLookup colorLookup; // Optional: for post-processing tint
@@ -173,6 +181,12 @@ public class LockdownManager : MonoBehaviour
         
         Debug.Log("LOCKDOWN INITIATED - Escape window open");
         
+        // Store ceiling light emission values before any transitions
+        if (useCeilingLightFade)
+        {
+            StoreCeilingEmissionValues();
+        }
+
         // Play facility announcement
         if (facilityAudioSource != null && lockdownAnnouncementClip != null)
         {
@@ -190,22 +204,28 @@ public class LockdownManager : MonoBehaviour
         {
             exitDoor.SetEscapeWindowActive(true);
         }
-        
+
+        // Start the sequenced lighting transitions
+        StartCoroutine(SequencedLightingTransition());
+
         // Switch to lockdown lighting
-        StartCoroutine(TransitionToLockdownLighting());
+        // StartCoroutine(TransitionToLockdownLighting());
         
         // Notify other systems
         OnLockdownInitiated?.Invoke();
         OnLockdownPhaseChanged?.Invoke(currentPhase);
     }
     
-    private IEnumerator TransitionToLockdownLighting()
+    private IEnumerator SequencedLightingTransition()
     {
         Debug.Log("Starting lighting transition to lockdown mode");
         
         // Brief delay to let announcement play
         yield return new WaitForSeconds(1f);
         
+        // Step 1: Ceiling lights fade and switch (happens first)
+        yield return StartCoroutine(TransitionCeilingLights());
+
         // Start lighting transition
         yield return StartCoroutine(AnimateLightingTransition());
         
@@ -254,54 +274,143 @@ public class LockdownManager : MonoBehaviour
         }
         
         // Swap materials if provided
-        SwapServerMaterials();
+        // SwapServerMaterials();
     }
     
-    private void SwapServerMaterials()
+    private void SwapCeilingLightMaterials()
     {
-        if (normalServerMaterials.Length == 0 || lockdownServerMaterials.Length == 0)
+        if (normalCeilingLightMaterials.Length == 0 || lockdownCeilingLightMaterials.Length == 0)
         {
-            Debug.Log("No materials configured for swapping");
+            Debug.Log("No ceiling light materials configured for swapping");
             return;
         }
         
-        if (normalServerMaterials.Length != lockdownServerMaterials.Length)
-        {
-            Debug.LogError("Normal and lockdown material arrays must be the same length!");
-            return;
-        }
+        Debug.Log($"Attempting to swap {ceilingLightRenderers.Length} ceiling light renderers to lockdown materials");
         
-        Debug.Log($"Swapping {serverRenderers.Length} renderers to lockdown materials");
-        
-        foreach (MeshRenderer renderer in serverRenderers)
+        foreach (MeshRenderer renderer in ceilingLightRenderers)
         {
             if (renderer == null) continue;
             
-            Material[] currentMaterials = renderer.materials;
-            
-            for (int i = 0; i < currentMaterials.Length; i++)
+            // Direct material swap
+            for (int j = 0; j < normalCeilingLightMaterials.Length; j++)
             {
-                // Find matching normal material and replace with lockdown version
-                for (int j = 0; j < normalServerMaterials.Length; j++)
+                // Check if the shared material matches our normal material
+                if (renderer.sharedMaterial == normalCeilingLightMaterials[j] || 
+                    renderer.sharedMaterial.name.Replace(" (Instance)", "") == normalCeilingLightMaterials[j].name)
                 {
-                    if (currentMaterials[i] == normalServerMaterials[j])
-                    {
-                        currentMaterials[i] = lockdownServerMaterials[j];
-                        break;
-                    }
+                    Debug.Log($"Swapping {renderer.name} from {renderer.material.name} to {lockdownCeilingLightMaterials[j].name}");
+                    renderer.material = lockdownCeilingLightMaterials[j];
+                    break;
                 }
             }
-            
-            renderer.materials = currentMaterials;
         }
     }
     
+    // Store original emission values for precise fading
+    private Dictionary<Material, Color> originalCeilingEmissionColors = new Dictionary<Material, Color>();
+
+    private void StoreCeilingEmissionValues()
+    {
+        foreach (MeshRenderer renderer in ceilingLightRenderers)
+        {
+            if (renderer == null) continue;
+            
+            foreach (Material mat in renderer.materials)
+            {
+                if (mat.HasProperty("_EmissionColor") && !originalCeilingEmissionColors.ContainsKey(mat))
+                {
+                    originalCeilingEmissionColors[mat] = mat.GetColor("_EmissionColor");
+                }
+            }
+        }
+    }
+
+    private void FadeCeilingEmission(float intensity)
+    {
+        foreach (MeshRenderer renderer in ceilingLightRenderers)
+        {
+            if (renderer == null) continue;
+            
+            Material[] materials = renderer.materials;
+            
+            for (int i = 0; i < materials.Length; i++)
+            {
+                if (materials[i].HasProperty("_EmissionColor"))
+                {
+                    // Use stored original color or fallback to blue
+                    Color originalEmission = originalCeilingEmissionColors.ContainsKey(materials[i]) 
+                        ? originalCeilingEmissionColors[materials[i]] 
+                        : Color.blue * 2f; // Adjust this to match your emission intensity
+                    
+                    Color fadedEmission = originalEmission * intensity;
+                    materials[i].SetColor("_EmissionColor", fadedEmission);
+                }
+            }
+            
+            renderer.materials = materials;
+        }
+    }
+
+    private IEnumerator TransitionCeilingLights()
+    {
+        if (!useCeilingLightFade || ceilingLightRenderers.Length == 0)
+        {
+            // Skip fade, just do immediate swap if materials are set up
+            SwapCeilingLightMaterials();
+            // Trigger lightmap switch immediately
+            TriggerLightmapSwitch();
+            yield break;
+        }
+        
+        Debug.Log("Starting ceiling light fade transition");
+        
+        // Phase 1: Fade emission down
+        float elapsed = 0f;
+        while (elapsed < ceilingLightFadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / ceilingLightFadeDuration;
+            float intensity = Mathf.Lerp(1f, 0f, t); // Fade from full to zero
+            
+            FadeCeilingEmission(intensity);
+            
+            yield return null;
+        }
+        
+        // Ensure emission is fully off
+        FadeCeilingEmission(0f);
+        
+        // Small pause to emphasize the "power down" moment
+        yield return new WaitForSeconds(0.02f);
+        
+        // Phase 2: Swap to lockdown materials
+        SwapCeilingLightMaterials();
+        TriggerLightmapSwitch();
+        
+        Debug.Log("Ceiling light transition complete");
+    }
+
+    private void TriggerLightmapSwitch()
+    {
+        // Trigger the lighting transition to lockdown lightmaps
+        DualLightmapController lightmapController = FindObjectOfType<DualLightmapController>();
+        if (lightmapController != null)
+        {
+            lightmapController.InitiateLockdownLighting();
+            Debug.Log("Lightmap transition initiated with ceiling light swap");
+        }
+        else
+        {
+            Debug.LogError("DualLightmapController not found!");
+        }
+    }
+
     private void StartFinalLockdown()
     {
         currentPhase = LockdownPhase.FinalLockdown;
-        
+
         Debug.Log("Final lockdown phase - Escape window closed");
-        
+
         // Disable exit door
         if (exitDoor != null)
         {
@@ -311,24 +420,12 @@ public class LockdownManager : MonoBehaviour
         // Trigger server rack emergency mode
         ServerRackMaterialController.SetAllRacksEmergencyMode(true, true, 0.05f);
 
-        // Trigger the lighting transition to red
-        DualLightmapController lightmapController = FindObjectOfType<DualLightmapController>();
-        if (lightmapController != null)
-        {
-            lightmapController.InitiateLockdownLighting();
-            Debug.Log("Lighting transition to red initiated");
-        }
-        else
-        {
-            Debug.LogError("DualLightmapController not found!");
-        }
-        
         // Start creepy ambient sounds
         if (creepyAmbientSounds != null && creepyAmbientSounds.Length > 0)
         {
             ambientSoundCoroutine = StartCoroutine(PlayCreepyAmbientSounds());
         }
-        
+
         // Notify other systems
         OnEscapeWindowClosed?.Invoke();
         OnLockdownPhaseChanged?.Invoke(currentPhase);
