@@ -354,6 +354,13 @@ public class WaterClueSystem : MonoBehaviour
             yield break;
         
         Debug.Log("Starting water drain");
+
+        // Play drain sound
+        if (InteractionSoundManager.Instance != null && basinWaterObject != null)
+        {
+            InteractionSoundManager.Instance.PlayWaterDrain(basinWaterObject.transform);
+            Debug.Log("Water drain sound played");
+        }
         
         // Get current water height
         float startHeight = basinWaterObject.transform.localPosition.y;
@@ -382,7 +389,7 @@ public class WaterClueSystem : MonoBehaviour
         basinWaterObject.SetActive(false);
         Debug.Log("Water drain complete, water object deactivated");
         
-        // REVEAL CLUE AFTER WATER HAS COMPLETELY DRAINED
+        // Reveal clue after water has completely drained
         if (!clueRevealed)
         {
             Debug.Log("Water has completely drained - revealing clue now!");

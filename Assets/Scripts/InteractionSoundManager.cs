@@ -18,6 +18,7 @@ public class InteractionSoundManager : MonoBehaviour
     [Header("Water System Sounds")]
     [SerializeField] private InteractionSoundCategory tapToggle;
     [SerializeField] private InteractionSoundCategory waterRunning;
+    [SerializeField] private InteractionSoundCategory waterDrain;
     [SerializeField] private InteractionSoundCategory valveInteraction;
 
     [Header("Electricity System Sounds")]
@@ -223,29 +224,59 @@ public class InteractionSoundManager : MonoBehaviour
         source.PlayOneShot(clipToPlay);
     }
 
+    // Play a 3D positioned sound
+    private void PlayPositionalSound(InteractionSoundCategory category, Transform soundPosition, float maxDistance = 15f)
+    {
+        if (category?.clips == null || category.clips.Length == 0)
+        {
+            Debug.LogWarning($"No audio clips found for category: {category?.categoryName}");
+            return;
+        }
+        
+        AudioSource source = GetAvailableAudioSource();
+        AudioClip clipToPlay = category.clips[Random.Range(0, category.clips.Length)];
+        
+        source.clip = clipToPlay;
+        source.volume = category.volume * masterVolume;
+        source.pitch = 1f;
+        source.spatialBlend = 1f; // 3D sound
+        source.rolloffMode = AudioRolloffMode.Linear;
+        source.maxDistance = maxDistance;
+        source.transform.position = soundPosition.position;
+        source.Play();
+        
+        // Calculate initial volume based on distance
+        if (playerTransform != null)
+        {
+            float distance = Vector3.Distance(playerTransform.position, soundPosition.position);
+            float volumeMultiplier = Mathf.Clamp01(1f - (distance / maxDistance));
+            source.volume = category.volume * volumeMultiplier * masterVolume;
+        }
+    }
+
     // Start a looping sound
     private AudioSource StartLoopingSound(InteractionSoundCategory category, string soundId)
     {
         if (category == null || category.clips == null || category.clips.Length == 0)
             return null;
-            
+
         // Stop previous instance if it exists
         StopLoopingSound(soundId);
-        
+
         // Create a new audio source for this looping sound
         AudioSource loopSource = gameObject.AddComponent<AudioSource>();
         loopSource.playOnAwake = false;
         loopSource.spatialBlend = 0f;
         loopSource.loop = true;
-        
+
         // Get the first clip from the category (for looping sounds, we typically use the first one)
         loopSource.clip = category.clips[0];
         loopSource.volume = category.volume * masterVolume;
         loopSource.Play();
-        
+
         // Store the source for later reference
         loopingSources[soundId] = loopSource;
-        
+
         return loopSource;
     }
 
@@ -295,6 +326,11 @@ public class InteractionSoundManager : MonoBehaviour
     public void PlayValveInteraction()
     {
         PlaySound(valveInteraction);
+    }
+
+    public void PlayWaterDrain(Transform drainPosition)
+    {
+        PlayPositionalSound(waterDrain, drainPosition, 15f);
     }
 
     // Electricity System
