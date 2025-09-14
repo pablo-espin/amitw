@@ -6,7 +6,7 @@ public class FootstepController : MonoBehaviour
     [Header("Footstep Settings")]
     [SerializeField] private float walkingStepInterval = 0.5f; // Time between walking steps
     [SerializeField] private float runningStepInterval = 0.3f; // Time between running steps
-    [SerializeField] private float movementThreshold = 0.1f; // Minimum movement to play footsteps
+    [SerializeField] private float movementThreshold = 0.001f; // Minimum movement to play footsteps
     
     [Header("Debug")]
     [SerializeField] private bool showDebugInfo = false;
