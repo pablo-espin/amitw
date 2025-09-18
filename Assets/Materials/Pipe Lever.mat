@@ -9,9 +9,10 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Pipe Lever
   m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
-  m_Parent: {fileID: 2100000, guid: eed39834ec25e2a46a6d8b4e7a1cb427, type: 2}
+  m_Parent: {fileID: 2100000, guid: 4b431ecf98a9a7746b747d5dc20a9948, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _DETAIL_MULX2
   - _METALLICSPECGLOSSMAP
   - _NORMALMAP
   m_InvalidKeywords: []
