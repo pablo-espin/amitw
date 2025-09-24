@@ -33,6 +33,8 @@ public class GameHUDManager : MonoBehaviour
     [SerializeField] private float extensionDisplayTime = 3f;
     [SerializeField] private Color errorColor = Color.red;
     [SerializeField] private Color extensionColor = Color.green;
+    [SerializeField] private VisualProgressRing visualProgressRing;
+    [SerializeField] private AnimatedGlowBorder visualBorder;
 
     [Header("Outcome Panel")]
     [SerializeField] private GameObject outcomePanel;
@@ -42,7 +44,7 @@ public class GameHUDManager : MonoBehaviour
     [SerializeField] private Button learnMoreButton;
     [SerializeField] private Button playAgainButton;
     [SerializeField] private string learnMoreURL = "https://example.com/datacenters";
-    
+
     [Header("Outcome Messages")]
     [SerializeField] private string successTitle = "MEMORY DECRYPTED";
     [SerializeField] private string successDescription = "You have successfully recovered the memory from the data center.";
@@ -61,7 +63,7 @@ public class GameHUDManager : MonoBehaviour
 
     [Header("Clue System")]
     [SerializeField] private ClueProgressUI clueProgressUI;
-    
+
     [Header("Simplified Stats Display")]
     [SerializeField] private PowerGaugeUI powerGauge;
     [SerializeField] private MemoryHealthBar memoryHealthBar;
@@ -69,7 +71,7 @@ public class GameHUDManager : MonoBehaviour
     [Header("Game Pause Settings")]
     [SerializeField] private bool gameIsPaused = false;
     private float originalTimeScale = 1f;
-    
+
     // References for interaction
     private PlayerInteractionManager interactionManager;
     private MemorySphere currentMemorySphere;
@@ -111,7 +113,7 @@ public class GameHUDManager : MonoBehaviour
         if (goBackButton != null) goBackButton.onClick.AddListener(OnGoBackClicked);
 
         // Set encrypted text
-        if (encryptedText != null) encryptedText.text = GenerateGarbledText();
+        // if (encryptedText != null) encryptedText.text = GenerateGarbledText();
 
         // Find references
         interactionManager = FindObjectOfType<PlayerInteractionManager>();
@@ -260,6 +262,13 @@ public class GameHUDManager : MonoBehaviour
         {
             uiInputController.DisableGameplayInput();
         }
+
+        // Restore visual components based on already used codes
+        if (visualProgressRing != null && clueProgressUI != null)
+        {
+            string[] clueCodes = clueProgressUI.GetClueCodes();
+            visualProgressRing.RestoreProgress(usedCodes, clueCodes);
+        }
     }
 
     public void CloseDecryptionPanel()
@@ -274,7 +283,7 @@ public class GameHUDManager : MonoBehaviour
                 UIStateManager.Instance.RegisterClosedUI("DecryptionPanel");
             }
         }
-        
+
         // Re-enable player movement
         if (interactionManager != null)
         {
@@ -285,16 +294,16 @@ public class GameHUDManager : MonoBehaviour
         if (uiInputController != null)
         {
             uiInputController.EnableGameplayInput();
-        }        
+        }
     }
 
     private void CheckDecryption()
     {
         if (decryptionInput == null || string.IsNullOrEmpty(decryptionInput.text))
             return;
-                
+
         string input = decryptionInput.text.Trim();
-        
+
         // Get all clue codes
         string[] clueCodes = clueProgressUI.GetClueCodes();
         string waterClueCode = clueCodes[0];
@@ -306,16 +315,26 @@ public class GameHUDManager : MonoBehaviour
         if (!string.IsNullOrEmpty(falseClueCode) && input.ToUpper().Contains(falseClueCode.ToUpper()))
         {
             computerCodeEntered = true;
-            
+
+            // Visual corruption
+            if (visualProgressRing != null)
+            {
+                visualProgressRing.AddCodeVisual(VisualProgressRing.CodeType.Computer);
+            }
+            if (visualBorder != null)
+            {
+                visualBorder.TriggerExcitement();
+            }
+
             if (lockdownManager != null && !lockdownManager.IsLockdownStarted())
             {
                 // Before lockdown - show choice
-                ShowComputerCodeChoice();
+                StartCoroutine(DelayedComputerCodeChoice());
             }
             else
             {
                 // After lockdown - just show corruption outcome
-                ShowCorruptionOutcome();
+                StartCoroutine(DelayedCorruptionOutcome());
             }
             return;
         }
@@ -324,15 +343,28 @@ public class GameHUDManager : MonoBehaviour
         bool waterCodeUsed = !string.IsNullOrEmpty(waterClueCode) && input.ToUpper().Contains(waterClueCode.ToUpper());
         bool electricityCodeUsed = !string.IsNullOrEmpty(electricityClueCode) && input.ToUpper().Contains(electricityClueCode.ToUpper());
         bool locationCodeUsed = !string.IsNullOrEmpty(locationClueCode) && input.ToUpper().Contains(locationClueCode.ToUpper());
-        
+
         int validCodesUsed = 0;
-        
+
         // Track new codes and notify lockdown manager
         if (waterCodeUsed && !usedCodes.Contains(waterClueCode))
         {
             usedCodes.Add(waterClueCode);
             validCodesUsed++;
             legitimateCodesEntered++;
+
+            // Update visual progress ring
+            if (visualProgressRing != null)
+            {
+                visualProgressRing.AddCodeVisual(VisualProgressRing.CodeType.Water);
+            }
+
+            // Trigger border excitement
+            if (visualBorder != null)
+            {
+                visualBorder.TriggerExcitement();
+            }
+
             if (lockdownManager != null) lockdownManager.OnCodeEntered();
         }
 
@@ -341,6 +373,19 @@ public class GameHUDManager : MonoBehaviour
             usedCodes.Add(electricityClueCode);
             validCodesUsed++;
             legitimateCodesEntered++;
+
+            // Update visual progress ring
+            if (visualProgressRing != null)
+            {
+                visualProgressRing.AddCodeVisual(VisualProgressRing.CodeType.Electricity);
+            }
+
+            // Trigger border excitement
+            if (visualBorder != null)
+            {
+                visualBorder.TriggerExcitement();
+            }
+
             if (lockdownManager != null) lockdownManager.OnCodeEntered();
         }
 
@@ -349,16 +394,29 @@ public class GameHUDManager : MonoBehaviour
             usedCodes.Add(locationClueCode);
             validCodesUsed++;
             legitimateCodesEntered++;
+
+            // Update visual progress ring
+            if (visualProgressRing != null)
+            {
+                visualProgressRing.AddCodeVisual(VisualProgressRing.CodeType.Location);
+            }
+
+            // Trigger border excitement
+            if (visualBorder != null)
+            {
+                visualBorder.TriggerExcitement();
+            }
+
             if (lockdownManager != null) lockdownManager.OnCodeEntered();
         }
 
         // Check if all three legitimate codes have been used
-        bool allCodesFound = !string.IsNullOrEmpty(waterClueCode) && 
-                            !string.IsNullOrEmpty(electricityClueCode) && 
+        bool allCodesFound = !string.IsNullOrEmpty(waterClueCode) &&
+                            !string.IsNullOrEmpty(electricityClueCode) &&
                             !string.IsNullOrEmpty(locationClueCode);
-                            
-        bool allCodesUsedCumulatively = usedCodes.Contains(waterClueCode) && 
-                                    usedCodes.Contains(electricityClueCode) && 
+
+        bool allCodesUsedCumulatively = usedCodes.Contains(waterClueCode) &&
+                                    usedCodes.Contains(electricityClueCode) &&
                                     usedCodes.Contains(locationClueCode);
 
         if (allCodesFound && allCodesUsedCumulatively)
@@ -366,12 +424,12 @@ public class GameHUDManager : MonoBehaviour
             if (lockdownManager != null && !lockdownManager.IsLockdownStarted())
             {
                 // Before lockdown - normal success
-                ShowSuccessOutcome();
+                StartCoroutine(DelayedSuccessOutcome());
             }
             else
             {
                 // After lockdown - heroic ending
-                ShowHeroicLockdownOutcome();
+                StartCoroutine(DelayedHeroicOutcome());
             }
             return;
         }
@@ -388,7 +446,7 @@ public class GameHUDManager : MonoBehaviour
             else
             {
                 // During lockdown phases, just show code accepted message
-                StartCoroutine(ShowTimerExtensionFeedback($"Valid code accepted ({validCodesUsed} codes)"));
+                StartCoroutine(ShowTimerExtensionFeedback($"Code accepted ({validCodesUsed} codes)"));
             }
             decryptionInput.text = "";
         }
@@ -409,38 +467,38 @@ public class GameHUDManager : MonoBehaviour
         // Store original positions and colors
         Vector2 originalPosition = decryptionInput.transform.localPosition;
         Color originalInputColor = decryptionInput.image.color;
-        
+
         // Show error message
         if (errorText != null)
         {
             errorText.gameObject.SetActive(true);
             errorText.text = message;
         }
-        
+
         // Shake effect
         float elapsed = 0f;
         float duration = 0.5f;
         float magnitude = 5f;
-        
+
         // Change input field color
         decryptionInput.image.color = errorColor;
-        
+
         while (elapsed < duration)
         {
             float x = originalPosition.x + Random.Range(-1f, 1f) * magnitude;
             float y = originalPosition.y + Random.Range(-1f, 1f) * magnitude;
-            
+
             decryptionInput.transform.localPosition = new Vector2(x, y);
-            
+
             elapsed += Time.deltaTime;
             yield return null;
         }
-        
+
         // Reset position and color
         decryptionInput.transform.localPosition = originalPosition;
         decryptionInput.image.color = originalInputColor;
         decryptionInput.text = "";
-        
+
         // Hide error message after delay
         yield return new WaitForSeconds(errorDisplayTime);
         if (errorText != null)
@@ -458,7 +516,7 @@ public class GameHUDManager : MonoBehaviour
             timerExtensionText.text = message;
             timerExtensionText.color = extensionColor;
         }
-        
+
         // Hide message after delay
         yield return new WaitForSeconds(extensionDisplayTime);
         if (timerExtensionText != null)
@@ -478,19 +536,19 @@ public class GameHUDManager : MonoBehaviour
             if (UIStateManager.Instance != null)
             {
                 UIStateManager.Instance.RegisterClosedUI("DecryptionPanel");
-            }            
+            }
         }
-        
+
         // Decrypt memory sphere
         if (interactionManager != null)
         {
             interactionManager.DecryptCurrentSphere();
         }
-        
+
         // Show outcome panel with regular stats
         ShowOutcomePanel(successTitle, successDescription, GenerateStats());
     }
-    
+
     private void ShowCorruptionOutcome()
     {
         // Hide decryption panel
@@ -502,45 +560,45 @@ public class GameHUDManager : MonoBehaviour
             if (UIStateManager.Instance != null)
             {
                 UIStateManager.Instance.RegisterClosedUI("DecryptionPanel");
-            }            
+            }
         }
-        
+
         // Corrupt memory sphere
         if (interactionManager != null)
         {
             interactionManager.CorruptCurrentSphere();
         }
-        
+
         // Show outcome panel with regular stats
         ShowOutcomePanel(corruptionTitle, corruptionDescription, GenerateStats());
     }
-        
+
     private void ShowComputerCodeChoice()
     {
         if (computerCodeChoicePanel != null)
         {
             computerCodeChoicePanel.SetActive(true);
-            
+
             // Register with UI state manager
             if (UIStateManager.Instance != null)
             {
                 UIStateManager.Instance.RegisterOpenUI("ComputerCodeChoice");
             }
-            
+
             if (computerCodeChoiceText != null)
             {
                 computerCodeChoiceText.text = "You have the opportunity to release all the memories in the world, but at an immense environmental and humanitarian cost. Do you wish to proceed?";
             }
-            
+
             // Disable other UI
             CloseDecryptionPanel();
-            
+
             // Disable player movement
             if (interactionManager != null)
             {
                 interactionManager.SetInteractionEnabled(false);
             }
-            
+
             // Disable player input
             if (uiInputController != null)
             {
@@ -555,14 +613,14 @@ public class GameHUDManager : MonoBehaviour
         if (computerCodeChoicePanel != null)
         {
             computerCodeChoicePanel.SetActive(false);
-            
+
             // Unregister with UI state manager
             if (UIStateManager.Instance != null)
             {
                 UIStateManager.Instance.RegisterClosedUI("ComputerCodeChoice");
             }
         }
-        
+
         // Show rebellious outcome
         ShowRebelliousOutcome();
     }
@@ -573,20 +631,20 @@ public class GameHUDManager : MonoBehaviour
         if (computerCodeChoicePanel != null)
         {
             computerCodeChoicePanel.SetActive(false);
-            
+
             // Unregister with UI state manager
             if (UIStateManager.Instance != null)
             {
                 UIStateManager.Instance.RegisterClosedUI("ComputerCodeChoice");
             }
         }
-        
+
         // Re-enable gameplay
         if (interactionManager != null)
         {
             interactionManager.SetInteractionEnabled(true);
         }
-        
+
         // Re-enable player input
         if (uiInputController != null)
         {
@@ -599,7 +657,7 @@ public class GameHUDManager : MonoBehaviour
         // Show outcome panel for deleted memory
         ShowOutcomePanel(timeoutTitle, timeoutDescription, GenerateStats());
     }
-    
+
     public void ShowEscapeOutcome()
     {
         // Use contextual stats for escape ending
@@ -629,7 +687,7 @@ public class GameHUDManager : MonoBehaviour
 
         // Generate stats before stopping tracking to get the final values with multiplier
         string finalStats = GenerateStats();
-    
+
         // Stop stats tracking after getting final stats
         if (statsSystem != null)
         {
@@ -679,34 +737,34 @@ public class GameHUDManager : MonoBehaviour
     private void PauseGame()
     {
         if (gameIsPaused) return;
-        
+
         gameIsPaused = true;
         originalTimeScale = Time.timeScale;
-        
+
         // Pause game simulation
         Time.timeScale = 0f;
-        
+
         // Disable player movement and interactions
         if (interactionManager != null)
         {
             interactionManager.SetInteractionEnabled(false);
         }
-        
+
         // Disable UI input for gameplay
         if (uiInputController != null)
         {
             uiInputController.DisableGameplayInput();
         }
-        
+
         // Unlock cursor for outcome panel interaction
         if (CursorManager.Instance != null)
         {
             CursorManager.Instance.RequestCursorUnlock("OutcomePanel");
         }
-        
+
         // Pause specific audio sources (keep UI sounds)
         PauseGameAudio();
-        
+
         // Stop any ongoing timers
         if (lockdownManager != null)
         {
@@ -717,33 +775,33 @@ public class GameHUDManager : MonoBehaviour
     public void ResumeGame()
     {
         if (!gameIsPaused) return;
-        
+
         gameIsPaused = false;
-        
+
         // Resume game simulation
         Time.timeScale = originalTimeScale;
-        
+
         // Re-enable player movement and interactions
         if (interactionManager != null)
         {
             interactionManager.SetInteractionEnabled(true);
         }
-        
+
         // Re-enable UI input for gameplay
         if (uiInputController != null)
         {
             uiInputController.EnableGameplayInput();
         }
-        
+
         // Lock cursor back for gameplay
         if (CursorManager.Instance != null)
         {
             CursorManager.Instance.ForceLockCursor();
         }
-        
+
         // Resume game audio
         ResumeGameAudio();
-        
+
         // Resume timers
         if (lockdownManager != null)
         {
@@ -758,7 +816,7 @@ public class GameHUDManager : MonoBehaviour
         {
             NarratorManager.Instance.PauseAudio();
         }
-        
+
         // Pause any looping sound effects
         var audioSources = FindObjectsOfType<AudioSource>();
         foreach (var source in audioSources)
@@ -778,7 +836,7 @@ public class GameHUDManager : MonoBehaviour
         {
             NarratorManager.Instance.ResumeAudio();
         }
-        
+
         // Resume any paused sound effects
         var audioSources = FindObjectsOfType<AudioSource>();
         foreach (var source in audioSources)
@@ -795,7 +853,7 @@ public class GameHUDManager : MonoBehaviour
     {
         Application.OpenURL(learnMoreURL);
     }
-    
+
     private void OnPlayAgainClicked()
     {
         // Use the GameManager's restart method for proper state management
@@ -821,14 +879,14 @@ public class GameHUDManager : MonoBehaviour
         if (outcomePanel != null)
         {
             outcomePanel.SetActive(false);
-            
+
             // Unregister from UI state manager
             if (UIStateManager.Instance != null)
             {
                 UIStateManager.Instance.RegisterClosedUI("OutcomePanel");
             }
         }
-        
+
         ResumeGame();
     }
 
@@ -836,6 +894,7 @@ public class GameHUDManager : MonoBehaviour
     {
         float extensionMinutes = extensionTime / 60f;
         StartCoroutine(ShowTimerExtensionFeedback($"Lockdown delayed by {extensionMinutes:F0} minutes!"));
+
     }
 
     // Generate regular stats
@@ -864,19 +923,43 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
-    private string GenerateGarbledText()
+    // private string GenerateGarbledText()
+    // {
+    //     // Generate random characters to represent encrypted text
+    //     string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*+øïÁ&½ÛÕµõ¬³¶Ð";
+    //     System.Text.StringBuilder result = new System.Text.StringBuilder();
+    //     System.Random random = new System.Random();
+
+    //     for (int i = 0; i < 200; i++)
+    //     {
+    //         result.Append(characters[random.Next(characters.Length)]);
+    //         if (i % 50 == 0 && i > 0) result.Append('\n');
+    //     }
+
+    //     return result.ToString();
+    // }
+    
+    private IEnumerator DelayedSuccessOutcome()
     {
-        // Generate random characters to represent encrypted text
-        string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*+øïÁ&½ÛÕµõ¬³¶Ð";
-        System.Text.StringBuilder result = new System.Text.StringBuilder();
-        System.Random random = new System.Random();
+        yield return new WaitForSeconds(2.5f); // Wait for completion animation
+        ShowSuccessOutcome();
+    }
 
-        for (int i = 0; i < 200; i++)
-        {
-            result.Append(characters[random.Next(characters.Length)]);
-            if (i % 50 == 0 && i > 0) result.Append('\n');
-        }
+    private IEnumerator DelayedCorruptionOutcome()
+    {
+        yield return new WaitForSeconds(2.5f); // Wait for corruption animation
+        ShowCorruptionOutcome();
+    }
 
-        return result.ToString();
+    private IEnumerator DelayedComputerCodeChoice()
+    {
+        yield return new WaitForSeconds(2.5f); // Wait for corruption animation
+        ShowComputerCodeChoice();
+    }
+
+    private IEnumerator DelayedHeroicOutcome()
+    {
+        yield return new WaitForSeconds(2.5f); // Wait for completion animation
+        ShowHeroicLockdownOutcome();
     }
 }

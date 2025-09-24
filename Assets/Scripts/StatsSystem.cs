@@ -220,7 +220,7 @@ public class StatsSystem : MonoBehaviour
 
     private void UpdateCurrentStats()
     {
-        if (!isGameActive) return; // NEW: Don't update if game is not active
+        if (!isGameActive) return; // Don't update if game is not active
         
         float currentGameTime = Time.time - gameStartTime;
 
