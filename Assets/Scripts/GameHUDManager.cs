@@ -80,6 +80,7 @@ public class GameHUDManager : MonoBehaviour
     private LockdownManager lockdownManager;
     private bool computerCodeEntered = false;
     private int legitimateCodesEntered = 0;
+    private Color originalDecryptionInputColor;
 
     // Code tracking
     private HashSet<string> usedCodes = new HashSet<string>();
@@ -107,13 +108,15 @@ public class GameHUDManager : MonoBehaviour
         if (closeButton != null) closeButton.onClick.AddListener(CloseDecryptionPanel);
         if (learnMoreButton != null) learnMoreButton.onClick.AddListener(OnLearnMoreClicked);
         if (playAgainButton != null) playAgainButton.onClick.AddListener(OnPlayAgainClicked);
-
-        // Add new button listeners
         if (releaseMemoriesButton != null) releaseMemoriesButton.onClick.AddListener(OnReleaseMemoriesClicked);
         if (goBackButton != null) goBackButton.onClick.AddListener(OnGoBackClicked);
 
-        // Set encrypted text
-        // if (encryptedText != null) encryptedText.text = GenerateGarbledText();
+        // Store the original input field color once at startup
+        if (decryptionInput != null && decryptionInput.image != null)
+        {
+            originalDecryptionInputColor = new Color32(0x21, 0x21, 0x21, 0xFF); // #212121
+            decryptionInput.image.color = originalDecryptionInputColor;
+        }
 
         // Find references
         interactionManager = FindObjectOfType<PlayerInteractionManager>();
@@ -464,9 +467,8 @@ public class GameHUDManager : MonoBehaviour
 
     private IEnumerator ShowWrongCodeFeedback(string message)
     {
-        // Store original positions and colors
+        // Store original position
         Vector2 originalPosition = decryptionInput.transform.localPosition;
-        Color originalInputColor = decryptionInput.image.color;
 
         // Show error message
         if (errorText != null)
@@ -477,11 +479,14 @@ public class GameHUDManager : MonoBehaviour
 
         // Shake effect
         float elapsed = 0f;
-        float duration = 0.5f;
-        float magnitude = 5f;
+        float duration = 0.7f;
+        float magnitude = 2f;
 
         // Change input field color
-        decryptionInput.image.color = errorColor;
+        if (decryptionInput.image != null)
+        {
+            decryptionInput.image.color = errorColor;
+        }
 
         while (elapsed < duration)
         {
@@ -496,7 +501,10 @@ public class GameHUDManager : MonoBehaviour
 
         // Reset position and color
         decryptionInput.transform.localPosition = originalPosition;
-        decryptionInput.image.color = originalInputColor;
+        if (decryptionInput.image != null)
+        {
+            decryptionInput.image.color = originalDecryptionInputColor;
+        }
         decryptionInput.text = "";
 
         // Hide error message after delay
