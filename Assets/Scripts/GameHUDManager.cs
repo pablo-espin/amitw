@@ -43,6 +43,7 @@ public class GameHUDManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI statsText;
     [SerializeField] private Button learnMoreButton;
     [SerializeField] private Button playAgainButton;
+    [SerializeField] private Button exitGameButton;
     [SerializeField] private string learnMoreURL = "https://example.com/datacenters";
 
     [Header("Outcome Messages")]
@@ -108,6 +109,7 @@ public class GameHUDManager : MonoBehaviour
         if (closeButton != null) closeButton.onClick.AddListener(CloseDecryptionPanel);
         if (learnMoreButton != null) learnMoreButton.onClick.AddListener(OnLearnMoreClicked);
         if (playAgainButton != null) playAgainButton.onClick.AddListener(OnPlayAgainClicked);
+        if (exitGameButton != null) exitGameButton.onClick.AddListener(OnExitGameClicked);
         if (releaseMemoriesButton != null) releaseMemoriesButton.onClick.AddListener(OnReleaseMemoriesClicked);
         if (goBackButton != null) goBackButton.onClick.AddListener(OnGoBackClicked);
 
@@ -879,6 +881,17 @@ public class GameHUDManager : MonoBehaviour
             }
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
+    }
+
+    // Call this to exit the game entirely
+    private void OnExitGameClicked()
+    {
+        // Use the same exit functionality as the pause menu
+    #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+    #else
+        Application.Quit();
+    #endif
     }
 
     // Call this if player wants to close outcome panel and continue playing
