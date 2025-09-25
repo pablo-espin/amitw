@@ -445,6 +445,12 @@ public class GameHUDManager : MonoBehaviour
         // Handle partial code entry feedback
         if (validCodesUsed > 0)
         {
+            // PLAY SUCCESS SOUND - A valid code was entered
+            if (UISoundManager.Instance != null)
+            {
+                UISoundManager.Instance.PlaySuccess();
+            }
+
             // Only show time extension if lockdown hasn't started yet
             if (lockdownManager != null && !lockdownManager.IsLockdownStarted())
             {
@@ -460,11 +466,23 @@ public class GameHUDManager : MonoBehaviour
         }
         else if (waterCodeUsed || electricityCodeUsed || locationCodeUsed)
         {
+            // PLAY ERROR SOUND - Code already used
+            if (UISoundManager.Instance != null)
+            {
+                UISoundManager.Instance.PlayError();
+            }
+
             // Code already used
             StartCoroutine(ShowWrongCodeFeedback("Code already used. Try another."));
         }
         else
         {
+            // PLAY ERROR SOUND - Wrong code entered
+            if (UISoundManager.Instance != null)
+            {
+                UISoundManager.Instance.PlayError();
+            }
+
             // Wrong code entered
             StartCoroutine(ShowWrongCodeFeedback("Invalid code. Try again."));
         }

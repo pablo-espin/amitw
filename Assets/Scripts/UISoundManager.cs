@@ -21,6 +21,7 @@ public class UISoundManager : MonoBehaviour
     [SerializeField] private UISoundGroup notificationSounds;
     [SerializeField] private UISoundGroup errorSounds;
     [SerializeField] private UISoundGroup successSounds;
+    [SerializeField] private UISoundGroup ringCompletionSounds;
 
     [Header("Settings")]
     [SerializeField] private int audioSourcePoolSize = 3;
@@ -130,13 +131,18 @@ public class UISoundManager : MonoBehaviour
     {
         PlaySound(successSounds);
     }
+    
+    public void PlayRingComplete()
+    {
+        PlaySound(ringCompletionSounds);
+    }
 
     // Method to play a custom UI sound if needed
     public void PlayCustomSound(AudioClip clip, float volume = 1f)
     {
         if (clip == null)
             return;
-            
+
         AudioSource source = GetAvailableAudioSource();
         source.volume = volume * masterVolume;
         source.PlayOneShot(clip);

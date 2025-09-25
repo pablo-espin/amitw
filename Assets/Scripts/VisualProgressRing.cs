@@ -209,6 +209,12 @@ public class VisualProgressRing : MonoBehaviour
 
     private IEnumerator PlayCompletionEffect()
     {
+        // PLAY RING COMPLETION SOUND AT THE START OF THE COMPLETION EFFECT
+        if (UISoundManager.Instance != null)
+        {
+            UISoundManager.Instance.PlayRingComplete();
+        }
+
         // Get references to all GameObjects that need scaling
         Transform progressRingTransform = progressRingImage?.transform;
         Transform glowRingTransform = glowRingImage?.transform;
