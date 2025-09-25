@@ -10,17 +10,12 @@ public class MemoryHealthBar : MonoBehaviour
     [SerializeField] private Image healthFill;
     [SerializeField] private TextMeshProUGUI criticalWarningText;
     
-    [Header("Health Degradation Settings")]
-    [SerializeField] private float degradationStartTime = 660f; // 11 minutes in seconds
-    [SerializeField] private float basePowerMW = 700f; // Should match StatsSystem
-    [SerializeField] private float degradationMultiplier = 0.1f; // How fast memories degrade
-    [SerializeField] private float criticalHealthThreshold = 25f; // Show warning below 25%
-    
     [Header("Visual Settings")]
     [SerializeField] private Color healthyColor = new Color(0.2f, 0.8f, 0.2f, 1f); // Green
     [SerializeField] private Color warningColor = new Color(1f, 1f, 0.2f, 1f); // Yellow  
     [SerializeField] private Color criticalColor = new Color(1f, 0.3f, 0.2f, 1f); // Red
     [SerializeField] private float colorTransitionSpeed = 2f;
+    [SerializeField] private float criticalHealthThreshold = 25f; // Show warning below 25%
     
     [Header("Warning Text Settings")]
     [SerializeField] private float warningTextFadeSpeed = 2f;
@@ -30,20 +25,12 @@ public class MemoryHealthBar : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool showDebugInfo = false;
     
-    // Current state
-    private float currentHealth = 100f; // Start at 100%
-    private float gameStartTime;
-    private bool degradationStarted = false;
+    // Current visual state
     private bool criticalWarningShown = false;
     private Coroutine warningTextCoroutine;
     
-    // Events
-    public System.Action OnMemoriesFullyDeleted; // Triggers trapped ending
-    
     private void Start()
     {
-        gameStartTime = Time.time;
-        
         // Initialize health bar
         if (healthSlider != null)
         {
@@ -56,14 +43,22 @@ public class MemoryHealthBar : MonoBehaviour
             criticalWarningText.gameObject.SetActive(false);
         }
         
-        // Subscribe to stats updates
+        // Subscribe to stats updates from StatsSystem
         if (StatsSystem.Instance != null)
         {
-            StatsSystem.Instance.OnStatsUpdated += UpdateHealthBar;
+            StatsSystem.Instance.OnMemoryHealthUpdated += UpdateHealthBar;
+            if (showDebugInfo)
+            {
+                Debug.Log("MemoryHealthBar subscribed to StatsSystem memory health updates");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("StatsSystem.Instance not found! MemoryHealthBar cannot subscribe to updates.");
         }
         
         // Set initial color
-        UpdateHealthBarColor();
+        UpdateHealthBarColor(100f);
         
         if (showDebugInfo)
         {
@@ -76,68 +71,25 @@ public class MemoryHealthBar : MonoBehaviour
         // Unsubscribe from events
         if (StatsSystem.Instance != null)
         {
-            StatsSystem.Instance.OnStatsUpdated -= UpdateHealthBar;
+            StatsSystem.Instance.OnMemoryHealthUpdated -= UpdateHealthBar;
         }
     }
     
-    // Called by StatsSystem when stats update
-    private void UpdateHealthBar(float powerMW, float waterLiterPerSecond, float co2KgPerSecond, float totalCO2Kg)
+    // Called by StatsSystem when memory health updates
+    private void UpdateHealthBar(float currentHealth)
     {
-        float currentGameTime = Time.time - gameStartTime;
-        
-        // Check if degradation should start
-        if (!degradationStarted && currentGameTime >= degradationStartTime)
-        {
-            degradationStarted = true;
-            if (showDebugInfo)
-            {
-                Debug.Log("Memory degradation started at 11 minutes");
-            }
-        }
-        
-        // Calculate health degradation if started
-        if (degradationStarted)
-        {
-            CalculateHealthDegradation(powerMW);
-        }
-        
         // Update visual elements
-        UpdateHealthSlider();
-        UpdateHealthBarColor();
-        UpdateCriticalWarning();
+        UpdateHealthSlider(currentHealth);
+        UpdateHealthBarColor(currentHealth);
+        UpdateCriticalWarning(currentHealth);
         
-        // Check for game ending condition
-        if (currentHealth <= 0f)
-        {
-            TriggerMemoriesFullyDeleted();
-        }
+        // if (showDebugInfo && Time.frameCount % 300 == 0) // Log every 5 seconds
+        // {
+        //     Debug.Log($"MemoryHealthBar updated - Health: {currentHealth:F1}%");
+        // }
     }
     
-    private void CalculateHealthDegradation(float currentPowerMW)
-    {
-        // Calculate degradation rate based on power above base level
-        float powerRatio = currentPowerMW / basePowerMW; // How many times base power
-        float excessPowerRatio = Mathf.Max(0f, powerRatio - 1f); // Only excess power causes degradation
-        
-        // Degradation rate increases with excess power
-        float degradationRate = excessPowerRatio * degradationMultiplier;
-        
-        // Apply degradation over time
-        float deltaTime = Time.deltaTime;
-        float healthLoss = degradationRate * deltaTime;
-        
-        if (healthLoss > 0f)
-        {
-            currentHealth = Mathf.Max(0f, currentHealth - healthLoss);
-            
-            if (showDebugInfo && Time.frameCount % 60 == 0) // Log every 60 frames
-            {
-                Debug.Log($"Memory Health: {currentHealth:F1}% (Power: {currentPowerMW:F0} MW, Rate: {degradationRate:F3}/s)");
-            }
-        }
-    }
-    
-    private void UpdateHealthSlider()
+    private void UpdateHealthSlider(float currentHealth)
     {
         if (healthSlider != null)
         {
@@ -146,7 +98,7 @@ public class MemoryHealthBar : MonoBehaviour
         }
     }
     
-    private void UpdateHealthBarColor()
+    private void UpdateHealthBarColor(float currentHealth)
     {
         if (healthFill == null) return;
         
@@ -169,7 +121,7 @@ public class MemoryHealthBar : MonoBehaviour
         healthFill.color = Color.Lerp(healthFill.color, targetColor, Time.deltaTime * colorTransitionSpeed);
     }
     
-    private void UpdateCriticalWarning()
+    private void UpdateCriticalWarning(float currentHealth)
     {
         bool shouldShowWarning = currentHealth <= criticalHealthThreshold && currentHealth > 0f;
         
@@ -182,11 +134,10 @@ public class MemoryHealthBar : MonoBehaviour
             HideCriticalWarning();
         }
         
-        // Update warning text content
+        // Update warning text content if showing
         if (criticalWarningShown && criticalWarningText != null)
         {
-            float deletedPercentage = 100f - currentHealth;
-            criticalWarningText.text = $"{deletedPercentage:F0}% of memories have been deleted";
+            criticalWarningText.text = $"CRITICAL: MEMORY INTEGRITY {currentHealth:F0}%";
         }
     }
     
@@ -196,18 +147,19 @@ public class MemoryHealthBar : MonoBehaviour
         
         criticalWarningShown = true;
         criticalWarningText.gameObject.SetActive(true);
-        criticalWarningText.color = warningTextColor;
         
-        // Start pulsing animation
+        // Stop any existing coroutine
         if (warningTextCoroutine != null)
         {
             StopCoroutine(warningTextCoroutine);
         }
+        
+        // Start pulsing animation
         warningTextCoroutine = StartCoroutine(PulseWarningText());
         
         if (showDebugInfo)
         {
-            Debug.Log($"Critical warning shown - {100f - currentHealth:F0}% of memories deleted");
+            Debug.Log("Critical memory warning shown");
         }
     }
     
@@ -217,24 +169,29 @@ public class MemoryHealthBar : MonoBehaviour
         
         criticalWarningShown = false;
         
-        // Stop pulsing animation
+        // Stop pulsing coroutine
         if (warningTextCoroutine != null)
         {
             StopCoroutine(warningTextCoroutine);
             warningTextCoroutine = null;
         }
         
-        // Fade out and hide
+        // Fade out the warning
         StartCoroutine(FadeOutWarningText());
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("Critical memory warning hidden");
+        }
     }
     
     private IEnumerator PulseWarningText()
     {
-        while (criticalWarningShown)
+        while (criticalWarningShown && criticalWarningText != null)
         {
-            // Pulse alpha between 0.7 and 1.0
-            float time = Time.time * warningTextPulseSpeed;
-            float alpha = Mathf.Lerp(0.7f, 1f, (Mathf.Sin(time) + 1f) * 0.5f);
+            // Pulse the alpha value
+            float alpha = (Mathf.Sin(Time.time * warningTextPulseSpeed) + 1f) * 0.5f;
+            alpha = Mathf.Lerp(0.5f, 1f, alpha); // Keep it visible, just pulse between 50% and 100%
             
             Color color = warningTextColor;
             color.a = alpha;
@@ -246,9 +203,11 @@ public class MemoryHealthBar : MonoBehaviour
     
     private IEnumerator FadeOutWarningText()
     {
+        if (criticalWarningText == null) yield break;
+        
         float startAlpha = criticalWarningText.color.a;
-        float elapsed = 0f;
         float fadeTime = 1f / warningTextFadeSpeed;
+        float elapsed = 0f;
         
         while (elapsed < fadeTime)
         {
@@ -265,68 +224,47 @@ public class MemoryHealthBar : MonoBehaviour
         criticalWarningText.gameObject.SetActive(false);
     }
     
-    private void TriggerMemoriesFullyDeleted()
+    // Public getters for external systems (gets values from StatsSystem)
+    public float GetCurrentHealth()
     {
-        if (currentHealth > 0f) return; // Already triggered
-        
-        currentHealth = 0f; // Ensure it's exactly 0
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("All memories deleted - triggering trapped ending");
-        }
-        
-        // Hide warning text since game is ending
-        if (criticalWarningText != null)
-        {
-            criticalWarningText.gameObject.SetActive(false);
-        }
-        
-        // Trigger event for game manager
-        OnMemoriesFullyDeleted?.Invoke();
+        return StatsSystem.Instance != null ? StatsSystem.Instance.GetCurrentMemoryHealth() : 100f;
     }
     
-    // Public getters
-    public float GetCurrentHealth() => currentHealth;
-    public bool IsHealthCritical() => currentHealth <= criticalHealthThreshold;
-    public bool AreDegradationStarted() => degradationStarted;
+    public bool IsHealthCritical()
+    {
+        return GetCurrentHealth() <= criticalHealthThreshold;
+    }
+    
+    public float GetCriticalThreshold()
+    {
+        return criticalHealthThreshold;
+    }
     
     // Debug methods
-    [ContextMenu("Test Critical Health")]
+    [ContextMenu("Test Critical Health Display")]
     public void TestCriticalHealth()
     {
-        currentHealth = 20f;
-        UpdateHealthSlider();
-        UpdateHealthBarColor();
-        UpdateCriticalWarning();
+        UpdateHealthBar(20f);
     }
     
-    [ContextMenu("Test Zero Health")]
+    [ContextMenu("Test Zero Health Display")]
     public void TestZeroHealth()
     {
-        currentHealth = 0f;
-        TriggerMemoriesFullyDeleted();
+        UpdateHealthBar(0f);
     }
     
-    [ContextMenu("Reset Health")]
-    public void ResetHealth()
+    [ContextMenu("Reset Health Display")]
+    public void ResetHealthDisplay()
     {
-        currentHealth = 100f;
-        degradationStarted = false;
-        criticalWarningShown = false;
-        UpdateHealthSlider();
-        UpdateHealthBarColor();
-        
-        if (criticalWarningText != null)
+        UpdateHealthBar(100f);
+    }
+    
+    [ContextMenu("Force Hide Warning")]
+    public void ForceHideWarning()
+    {
+        if (criticalWarningShown)
         {
-            criticalWarningText.gameObject.SetActive(false);
+            HideCriticalWarning();
         }
-    }
-    
-    [ContextMenu("Force Start Degradation")]
-    public void ForceStartDegradation()
-    {
-        degradationStarted = true;
-        Debug.Log("Forced memory degradation start");
     }
 }

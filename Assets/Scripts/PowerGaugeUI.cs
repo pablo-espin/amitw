@@ -21,12 +21,12 @@ public class PowerGaugeUI : MonoBehaviour
     [SerializeField] private Color warningBrightRedColor = new Color(0.8f, 0f, 0f, 0.5f); // Bright red pulse peak for warning+
     [SerializeField] private float pulsationSpeed = 1.5f; // Pulses per second
     
-    [Header("Needle Glow Effects")]
-    [SerializeField] private bool useNeedleGlow = true;
-    [SerializeField] private Color normalNeedleColor = Color.white;
-    [SerializeField] private Color warningNeedleColor = Color.yellow;
-    [SerializeField] private Color dangerNeedleColor = Color.red;
-    [SerializeField] private Color criticalNeedleColor = new Color(1f, 0.3f, 0.1f, 1f); // Bright red-orange
+    // [Header("Needle Glow Effects")]
+    // [SerializeField] private bool useNeedleGlow = true;
+    // [SerializeField] private Color normalNeedleColor = Color.white;
+    // [SerializeField] private Color warningNeedleColor = Color.yellow;
+    // [SerializeField] private Color dangerNeedleColor = Color.red;
+    // [SerializeField] private Color criticalNeedleColor = new Color(1f, 0.3f, 0.1f, 1f); // Bright red-orange
     
     [Header("Animation Settings")]
     [SerializeField] private float needleAnimationSpeed = 2f;
@@ -84,7 +84,7 @@ public class PowerGaugeUI : MonoBehaviour
         }
         
         // Set initial needle color
-        UpdateNeedleColor(currentPowerMW);
+        // UpdateNeedleColor(currentPowerMW);
     }
     
     private void OnDestroy()
@@ -119,7 +119,7 @@ public class PowerGaugeUI : MonoBehaviour
         float newTargetAngle = CalculateNeedleAngle(powerMW);
         
         // Update needle color based on current percentage
-        UpdateNeedleColor(powerMW);
+        // UpdateNeedleColor(powerMW);
         
         // Update background state (pulsation)
         UpdateBackgroundState(powerMW);
@@ -127,7 +127,7 @@ public class PowerGaugeUI : MonoBehaviour
         // Animate needle to new position
         AnimateNeedleToAngle(newTargetAngle);
         
-        if (showDebugInfo)
+        if (showDebugInfo && Time.frameCount % 600 == 0) // Log every 10 seconds
         {
             float percentage = CalculateGaugePercentage(powerMW);
             string zone = GetCurrentZone();
@@ -159,40 +159,40 @@ public class PowerGaugeUI : MonoBehaviour
         return angle;
     }
     
-    private void UpdateNeedleColor(float powerMW)
-    {
-        if (!useNeedleGlow || needleImage == null) 
-            return;
+    // private void UpdateNeedleColor(float powerMW)
+    // {
+    //     if (!useNeedleGlow || needleImage == null) 
+    //         return;
         
-        float percentage = CalculateGaugePercentage(powerMW);
-        Color targetColor;
+    //     float percentage = CalculateGaugePercentage(powerMW);
+    //     Color targetColor;
         
-        if (percentage <= 70f)
-        {
-            // Normal zone (0-70%) - White/Normal needle
-            targetColor = normalNeedleColor;
-        }
-        else if (percentage <= 90f)
-        {
-            // Warning zone (70-90%) - Yellow needle
-            float t = (percentage - 70f) / 20f; // 0 to 1 within warning zone
-            targetColor = Color.Lerp(normalNeedleColor, warningNeedleColor, t);
-        }
-        else if (percentage <= 100f)
-        {
-            // Danger zone (90-100%) - Red needle
-            float t = (percentage - 90f) / 10f; // 0 to 1 within danger zone
-            targetColor = Color.Lerp(warningNeedleColor, dangerNeedleColor, t);
-        }
-        else
-        {
-            // Critical zone (100%+) - Bright red-orange needle
-            targetColor = criticalNeedleColor;
-        }
+    //     if (percentage <= 70f)
+    //     {
+    //         // Normal zone (0-70%) - White/Normal needle
+    //         targetColor = normalNeedleColor;
+    //     }
+    //     else if (percentage <= 90f)
+    //     {
+    //         // Warning zone (70-90%) - Yellow needle
+    //         float t = (percentage - 70f) / 20f; // 0 to 1 within warning zone
+    //         targetColor = Color.Lerp(normalNeedleColor, warningNeedleColor, t);
+    //     }
+    //     else if (percentage <= 100f)
+    //     {
+    //         // Danger zone (90-100%) - Red needle
+    //         float t = (percentage - 90f) / 10f; // 0 to 1 within danger zone
+    //         targetColor = Color.Lerp(warningNeedleColor, dangerNeedleColor, t);
+    //     }
+    //     else
+    //     {
+    //         // Critical zone (100%+) - Bright red-orange needle
+    //         targetColor = criticalNeedleColor;
+    //     }
         
-        // Apply color smoothly
-        needleImage.color = Color.Lerp(needleImage.color, targetColor, Time.deltaTime * 3f);
-    }
+    //     // Apply color smoothly
+    //     needleImage.color = Color.Lerp(needleImage.color, targetColor, Time.deltaTime * 3f);
+    // }
     
     private void UpdateBackgroundState(float powerMW)
     {
@@ -269,10 +269,10 @@ public class PowerGaugeUI : MonoBehaviour
             // Apply color to background
             powerGaugeContainerBackground.color = currentColor;
             
-            if (showDebugInfo && Time.frameCount % 60 == 0) // Log every 60 frames to avoid spam
-            {
-                Debug.Log($"PowerGauge: Pulsation - sine: {sineValue:F2}, normalized: {normalizedSine:F2}, color: {currentColor}");
-            }
+            // if (showDebugInfo && Time.frameCount % 60 == 0) // Log every 60 frames to avoid spam
+            // {
+            //     Debug.Log($"PowerGauge: Pulsation - sine: {sineValue:F2}, normalized: {normalizedSine:F2}, color: {currentColor}");
+            // }
             
             yield return null;
         }

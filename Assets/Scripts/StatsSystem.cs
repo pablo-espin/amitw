@@ -26,8 +26,7 @@ public class StatsSystem : MonoBehaviour
     [SerializeField] private float memoryReleaseMultiplier = 10.0f; // 10x all stats
 
     [Header("Memory Health Settings")]
-    [SerializeField] private float memoryDegradationStartTime = 660f; // 11 minutes in seconds
-    [SerializeField] private float memoryDegradationMultiplier = 0.1f; // How fast memories degrade
+    [SerializeField] private float memoryDegradationMultiplier = 0.1f; // How fast memories degrade per excess power ratio
 
     [Header("Debug")]
     [SerializeField] private bool showDebugInfo = true;
@@ -49,9 +48,8 @@ public class StatsSystem : MonoBehaviour
     private float totalWaterLiters = 0f;
     private float totalCO2Kg = 0f;
 
-    // Memory health tracking
+    // Memory health tracking (centralized)
     private float currentMemoryHealth = 100f; // Start at 100%
-    private bool memoryDegradationStarted = false;
 
     // Integration tracking
     private float lastUpdateTime;
@@ -68,6 +66,7 @@ public class StatsSystem : MonoBehaviour
     // Events for HUD updates
     public System.Action<float, float, float, float> OnStatsUpdated; // power, water rate, CO2 rate, total CO2
     public System.Action<float> OnMemoryHealthUpdated; // memory health percentage
+    public System.Action OnMemoriesFullyDeleted; // New: triggers trapped ending
 
     private void Awake()
     {
@@ -93,129 +92,69 @@ public class StatsSystem : MonoBehaviour
 
         if (showDebugInfo)
         {
-            Debug.Log($"StatsSystem initialized. Base power: {basePowerMW} MW, Base water: {baseWaterLiterPerSecond} L/s, Base CO2: {baseCO2KgPerSecond} kg/s");
+            Debug.Log($"StatsSystem initialized. Base: {basePowerMW}MW, {baseWaterLiterPerSecond}L/s, {baseCO2KgPerSecond}kg/s");
         }
     }
 
     private void Update()
     {
-        // Only update stats if game is still active
-        if (!isGameActive) return;
-
-        UpdateCurrentStats();
-        IntegrateStats();
-        UpdateMemoryHealth();
-    }
-
-    // Stop stats tracking when game ends
-    public void StopStatsTracking()
-    {
-        if (statsStoppedForEnding) return; // Prevent multiple calls
-
-        isGameActive = false;
-        statsStoppedForEnding = true;
-
-        if (showDebugInfo)
+        if (isGameActive)
         {
-            Debug.Log("StatsSystem: Stats tracking stopped for game ending");
-            Debug.Log($"Final Stats - Energy: {totalEnergyMWh:F2} MWh, Water: {totalWaterLiters:F0} L, CO2: {totalCO2Kg:F1} kg");
+            UpdateCurrentStats();
+            UpdateMemoryHealthDegradation();
+            IntegrateStats();
         }
     }
 
-    // Resume stats tracking (if needed for new game)
-    public void ResumeStatsTracking()
+    private void UpdateMemoryHealthDegradation()
     {
-        isGameActive = true;
-        statsStoppedForEnding = false;
+        if (!isGameActive || currentMemoryHealth <= 0f) return;
 
-        if (showDebugInfo)
+        // Calculate degradation rate based on power above base level
+        float powerRatio = currentPowerMW / basePowerMW;
+        float excessPowerRatio = Mathf.Max(0f, powerRatio - 1f); // Only excess power causes degradation
+
+        // Apply degradation if there's excess power
+        if (excessPowerRatio > 0f)
         {
-            Debug.Log("StatsSystem: Stats tracking resumed");
-        }
-    }
-
-    // Reset all stats for new game
-    public void ResetStats()
-    {
-        // Reset accumulated totals
-        totalEnergyMWh = 0f;
-        totalWaterLiters = 0f;
-        totalCO2Kg = 0f;
-
-        // Reset player action modifiers
-        electricityConnected = false;
-        waterTapRunning = false;
-        captchaSolved = false;
-        memoryReleased = false;
-
-        // Reset memory health
-        currentMemoryHealth = 100f;
-        memoryDegradationStarted = false;
-
-        // Reset game state
-        isGameActive = true;
-        statsStoppedForEnding = false;
-
-        // Reset timing
-        gameStartTime = Time.time;
-        lastUpdateTime = gameStartTime;
-
-        // Clear history
-        powerHistory.Clear();
-        timeHistory.Clear();
-
-        // Recalculate initial values
-        UpdateCurrentStats();
-
-        if (showDebugInfo)
-        {
-            Debug.Log("StatsSystem: All stats reset for new game");
-        }
-    }
-
-    private void UpdateMemoryHealth()
-    {
-        if (!isGameActive) return; // Don't update if game is not active
-
-        float currentGameTime = Time.time - gameStartTime;
-
-        // Check if memory degradation should start
-        if (!memoryDegradationStarted && currentGameTime >= memoryDegradationStartTime)
-        {
-            memoryDegradationStarted = true;
-            if (showDebugInfo)
-            {
-                Debug.Log("Memory degradation started at 11 minutes");
-            }
-        }
-
-        // Calculate memory health degradation if started
-        if (memoryDegradationStarted && currentMemoryHealth > 0f)
-        {
-            // Calculate degradation rate based on power above base level
-            float powerRatio = currentPowerMW / basePowerMW;
-            float excessPowerRatio = Mathf.Max(0f, powerRatio - 1f); // Only excess power causes degradation
-
-            // Degradation rate increases with excess power
             float degradationRate = excessPowerRatio * memoryDegradationMultiplier;
-
-            // Apply degradation over time
             float deltaTime = Time.deltaTime;
             float healthLoss = degradationRate * deltaTime;
 
-            if (healthLoss > 0f)
+            currentMemoryHealth = Mathf.Max(0f, currentMemoryHealth - healthLoss);
+
+            if (showDebugInfo && Time.frameCount % 300 == 0) // Log every 5 seconds
             {
-                currentMemoryHealth = Mathf.Max(0f, currentMemoryHealth - healthLoss);
+                Debug.Log($"Memory Health: {currentMemoryHealth:F1}% (Power: {currentPowerMW:F0}MW, Excess: {excessPowerRatio:F2}x, Rate: {degradationRate:F3}/s)");
+            }
 
-                if (showDebugInfo && Time.frameCount % 300 == 0) // Log every 5 seconds
-                {
-                    Debug.Log($"Memory Health: {currentMemoryHealth:F1}% (degradation rate: {degradationRate:F3}/s)");
-                }
+            // Notify listeners of memory health updates
+            OnMemoryHealthUpdated?.Invoke(currentMemoryHealth);
 
-                // Notify listeners
-                OnMemoryHealthUpdated?.Invoke(currentMemoryHealth);
+            // Check for memory deletion
+            if (currentMemoryHealth <= 0f && !statsStoppedForEnding)
+            {
+                TriggerMemoriesFullyDeleted();
             }
         }
+    }
+
+    private void TriggerMemoriesFullyDeleted()
+    {
+        if (statsStoppedForEnding) return; // Prevent multiple triggers
+
+        currentMemoryHealth = 0f; // Ensure it's exactly 0
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("All memories deleted - triggering trapped ending");
+        }
+
+        // Stop stats tracking
+        StopStatsTracking();
+
+        // Trigger event for game manager
+        OnMemoriesFullyDeleted?.Invoke();
     }
 
     private void UpdateCurrentStats()
@@ -257,9 +196,6 @@ public class StatsSystem : MonoBehaviour
 
         // Notify HUD of updates (current rates + total CO2)
         OnStatsUpdated?.Invoke(currentPowerMW, currentWaterLiterPerSecond, currentCO2KgPerSecond, totalCO2Kg);
-
-        // Notify of memory health updates
-        OnMemoryHealthUpdated?.Invoke(currentMemoryHealth);
     }
 
     private float CalculateBasePowerMultiplier(float gameTime)
@@ -309,7 +245,7 @@ public class StatsSystem : MonoBehaviour
 
     private void IntegrateStats()
     {
-        if (!isGameActive) return; // NEW: Don't integrate if game is not active
+        if (!isGameActive) return; // Don't integrate if game is not active
         
         float currentTime = Time.time;
         float deltaTime = currentTime - lastUpdateTime;
@@ -395,6 +331,51 @@ public class StatsSystem : MonoBehaviour
         }
     }
 
+    public void StopStatsTracking()
+    {
+        if (!statsStoppedForEnding)
+        {
+            statsStoppedForEnding = true;
+            isGameActive = false;
+            if (showDebugInfo)
+            {
+                Debug.Log("Stats tracking stopped for ending");
+            }
+        }
+    }
+
+    public void ResetStats()
+    {
+        // Reset all values to initial state
+        currentPowerMW = basePowerMW;
+        currentWaterLiterPerSecond = baseWaterLiterPerSecond;
+        currentCO2KgPerSecond = baseCO2KgPerSecond;
+        currentMemoryHealth = 100f;
+
+        totalEnergyMWh = 0f;
+        totalWaterLiters = 0f;
+        totalCO2Kg = 0f;
+
+        electricityConnected = false;
+        waterTapRunning = false;
+        captchaSolved = false;
+        memoryReleased = false;
+
+        powerHistory.Clear();
+        timeHistory.Clear();
+
+        isGameActive = true;
+        statsStoppedForEnding = false;
+
+        gameStartTime = Time.time;
+        lastUpdateTime = gameStartTime;
+
+        if (showDebugInfo)
+        {
+            Debug.Log("Stats system reset to initial values");
+        }
+    }
+
     // Getters for current stats
     public float GetCurrentPowerMW() => currentPowerMW;
     public float GetCurrentWaterLiterPerSecond() => currentWaterLiterPerSecond;
@@ -409,12 +390,17 @@ public class StatsSystem : MonoBehaviour
     // Get game time for context
     public float GetGameTime() => Time.time - gameStartTime;
 
-    // Get memory health
-    public bool IsMemoryDegradationStarted() => memoryDegradationStarted;
+    // Get memory health status
     public bool AreMemoriesFullyDeleted() => currentMemoryHealth <= 0f;
 
     // Check if game is active
     public bool IsGameActive() => isGameActive;
+
+    // Get base power for other systems to use
+    public float GetBasePowerMW() => basePowerMW;
+    
+    // Get degradation multiplier for other systems to use  
+    public float GetMemoryDegradationMultiplier() => memoryDegradationMultiplier;
 
     // For end-game stats formatting
     public string GetFormattedStats(bool isEscapeEnding = false, bool isHeroicEnding = false)
@@ -442,9 +428,10 @@ public class StatsSystem : MonoBehaviour
     {
         Debug.Log($"=== CURRENT STATS ===");
         Debug.Log($"Game Time: {GetGameTime():F1} seconds");
-        Debug.Log($"Power: {currentPowerMW:F1} MW");
+        Debug.Log($"Power: {currentPowerMW:F1} MW (Base: {basePowerMW} MW)");
         Debug.Log($"Water: {currentWaterLiterPerSecond:F1} L/s");
         Debug.Log($"CO2: {currentCO2KgPerSecond:F3} kg/s");
+        Debug.Log($"Memory Health: {currentMemoryHealth:F1}%");
         Debug.Log($"=== TOTALS ===");
         Debug.Log($"Energy: {totalEnergyMWh:F2} MWh");
         Debug.Log($"Water: {totalWaterLiters:F0} L");
@@ -498,5 +485,20 @@ public class StatsSystem : MonoBehaviour
     {
         ResetStats();
         ShowCurrentStats();
+    }
+
+    [ContextMenu("Test Memory at Critical Health")]
+    public void TestCriticalMemoryHealth()
+    {
+        currentMemoryHealth = 20f;
+        OnMemoryHealthUpdated?.Invoke(currentMemoryHealth);
+        Debug.Log($"Memory health set to critical: {currentMemoryHealth}%");
+    }
+
+    [ContextMenu("Test Memory Fully Deleted")]
+    public void TestMemoryFullyDeleted()
+    {
+        currentMemoryHealth = 0f;
+        TriggerMemoriesFullyDeleted();
     }
 }

@@ -387,10 +387,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Start
+  m_text: Start Game
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 441754ff620dff04a84f1ea7f41bffd8, type: 2}
-  m_sharedMaterial: {fileID: 7516579824567634635, guid: 441754ff620dff04a84f1ea7f41bffd8, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 056990aac3fd18e409d371c6fa0b1c8b, type: 2}
+  m_sharedMaterial: {fileID: -76518627413224597, guid: 056990aac3fd18e409d371c6fa0b1c8b, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -479,7 +479,7 @@ GameObject:
   - component: {fileID: 499490992}
   - component: {fileID: 499490991}
   m_Layer: 5
-  m_Name: Start
+  m_Name: StartButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -955,7 +955,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &966222955
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -146,10 +146,10 @@ public class GameHUDManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Unsubscribe from memory health bar events
-        if (memoryHealthBar != null)
+        // Unsubscribe from StatsSystem event
+        if (StatsSystem.Instance != null)
         {
-            memoryHealthBar.OnMemoriesFullyDeleted -= OnMemoriesFullyDeleted;
+            StatsSystem.Instance.OnMemoriesFullyDeleted -= OnMemoriesFullyDeleted;
         }
     }
 
@@ -212,12 +212,22 @@ public class GameHUDManager : MonoBehaviour
         // Initialize memory health bar and subscribe to deletion event
         if (memoryHealthBar != null)
         {
-            memoryHealthBar.OnMemoriesFullyDeleted += OnMemoriesFullyDeleted;
             Debug.Log("MemoryHealthBar component found and subscribed to deletion event");
         }
         else
         {
             Debug.LogWarning("MemoryHealthBar component not assigned in GameHUDManager!");
+        }
+
+        // Subscribe to StatsSystem events for memory deletion
+        if (StatsSystem.Instance != null)
+        {
+            StatsSystem.Instance.OnMemoriesFullyDeleted += OnMemoriesFullyDeleted;
+            Debug.Log("GameHUDManager subscribed to StatsSystem memory deletion event");
+        }
+        else
+        {
+            Debug.LogWarning("StatsSystem.Instance not found! GameHUDManager cannot subscribe to memory deletion events.");
         }
 
         Debug.Log("Simplified stats system initialized");
@@ -227,13 +237,6 @@ public class GameHUDManager : MonoBehaviour
     private void OnMemoriesFullyDeleted()
     {
         Debug.Log("All memories deleted - showing trapped ending");
-
-        // Stop stats tracking when memories are fully deleted
-        if (statsSystem != null)
-        {
-            statsSystem.StopStatsTracking();
-        }
-
         ShowTrappedOutcome();
     }
 

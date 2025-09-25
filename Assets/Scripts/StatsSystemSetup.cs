@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// Helper script to ensure StatsSystem is properly set up in the scene.
-/// Attach this to any GameObject in your GameLevel scene.
+/// Attach this to any GameObject in GameLevel scene.
 /// </summary>
 public class StatsSystemSetup : MonoBehaviour
 {
