@@ -24,6 +24,11 @@ public class ElectricityClueSystem : MonoBehaviour
     [Header("Area Lighting")]
     [SerializeField] private Light[] areaLights;
     [SerializeField] private float areaLightIntensity = 1f;
+
+    [Header("Lightbulb Models")]
+    [SerializeField] private MeshRenderer[] lightbulbRenderers; // 3D lightbulb models
+    [SerializeField] private Material[] lightbulbOnMaterials;   // Materials for "on" state
+    [SerializeField] private Material[] lightbulbOffMaterials;  // Materials for "off" state
     
     [Header("Server Rack Integration")]
     [SerializeField] private ServerRackMaterialController[] serversToActivate; // Specific servers to power on
@@ -48,6 +53,8 @@ public class ElectricityClueSystem : MonoBehaviour
     // References for interaction
     private PlayerInteractionManager interactionManager;
     private MeshRenderer clueTextRenderer;
+    private bool lightbulbsRegisteredWithLockdown = false;
+    private bool areaLightsCurrentlyOn = false;
     
     void Start()
     {
@@ -59,10 +66,16 @@ public class ElectricityClueSystem : MonoBehaviour
         
         // Set initial states
         SetLightsState(false);
+
+        // Initialize lightbulbs to "off" state
+        InitializeLightbulbs();
         
         // Hide clue text
         if (clueTextObject) clueTextObject.SetActive(false);
         
+        // Subscribe to lockdown events
+        SubscribeToLockdownEvents();
+
         // Setup spark effect
         if (sparkEffect != null)
         {
@@ -130,11 +143,146 @@ public class ElectricityClueSystem : MonoBehaviour
         }
     }
     
+    private void SubscribeToLockdownEvents()
+    {
+        LockdownManager lockdownManager = FindObjectOfType<LockdownManager>();
+        if (lockdownManager != null)
+        {
+            // Subscribe to lockdown phase changes
+            lockdownManager.OnLockdownPhaseChanged += HandleLockdownPhaseChange;
+            Debug.Log("ElectricityClueSystem subscribed to lockdown events");
+        }
+        else
+        {
+            Debug.LogWarning("LockdownManager not found - cannot subscribe to lockdown events");
+        }
+    }
+    
+    private void OnDestroy()
+    {
+        // Unsubscribe from events to prevent memory leaks
+        LockdownManager lockdownManager = FindObjectOfType<LockdownManager>();
+        if (lockdownManager != null)
+        {
+            lockdownManager.OnLockdownPhaseChanged -= HandleLockdownPhaseChange;
+        }
+    }
+    
+    private void HandleLockdownPhaseChange(LockdownManager.LockdownPhase newPhase)
+    {
+        Debug.Log($"ElectricityClueSystem received lockdown phase change: {newPhase}");
+        
+        if (newPhase != LockdownManager.LockdownPhase.Normal && areaLightsCurrentlyOn)
+        {
+            // Lockdown started and our lights are on - turn them off
+            Debug.Log("Lockdown detected - turning off electricity area lights");
+            TurnOffAreaLights();
+        }
+        else if (newPhase == LockdownManager.LockdownPhase.Normal && cableConnected)
+        {
+            // Lockdown ended and cable is connected - turn lights back on
+            Debug.Log("Lockdown ended - turning electricity area lights back on");
+            TurnOnAreaLights();
+        }
+    }
+    
+    private void TurnOffAreaLights()
+    {
+        for (int i = 0; i < areaLights.Length; i++)
+        {
+            if (areaLights[i] != null)
+            {
+                areaLights[i].enabled = false;
+                Debug.Log($"Turned off area light [{i}] {areaLights[i].gameObject.name} due to lockdown");
+            }
+        }
+        areaLightsCurrentlyOn = false;
+    }
+    
+    private void TurnOnAreaLights()
+    {
+        for (int i = 0; i < areaLights.Length; i++)
+        {
+            if (areaLights[i] != null)
+            {
+                areaLights[i].enabled = true;
+                areaLights[i].intensity = areaLightIntensity;
+                Debug.Log($"Turned on area light [{i}] {areaLights[i].gameObject.name}");
+            }
+        }
+        areaLightsCurrentlyOn = true;
+    }
+
+    private void InitializeLightbulbs()
+    {
+        // Validate lightbulb arrays
+        if (!ValidateLightbulbArrays())
+        {
+            Debug.LogError("Lightbulb array validation failed! Check inspector assignments.");
+            return;
+        }
+
+        // Set all lightbulbs to "off" state initially using the shared off material
+        Material offMaterial = lightbulbOffMaterials[0]; // Use first (and likely only) off material
+
+        for (int i = 0; i < lightbulbRenderers.Length; i++)
+        {
+            if (lightbulbRenderers[i] != null && offMaterial != null)
+            {
+                lightbulbRenderers[i].material = offMaterial;
+                Debug.Log($"Initialized lightbulb [{i}] {lightbulbRenderers[i].gameObject.name} to OFF state");
+            }
+        }
+
+        Debug.Log($"Initialized {lightbulbRenderers.Length} lightbulbs to OFF state using shared material");
+    }
+    
+    private bool ValidateLightbulbArrays()
+    {
+        if (lightbulbRenderers == null || lightbulbOnMaterials == null || lightbulbOffMaterials == null)
+        {
+            Debug.LogWarning("Lightbulb arrays not assigned - lightbulb material swapping will be disabled");
+            return false;
+        }
+        
+        // Check that we have at least one material of each type
+        if (lightbulbOnMaterials.Length == 0 || lightbulbOffMaterials.Length == 0)
+        {
+            Debug.LogError($"Missing materials! On Materials: {lightbulbOnMaterials.Length}, Off Materials: {lightbulbOffMaterials.Length}");
+            return false;
+        }
+        
+        // Check for null material references
+        if (lightbulbOnMaterials[0] == null)
+        {
+            Debug.LogError("Lightbulb ON material is null!");
+            return false;
+        }
+        
+        if (lightbulbOffMaterials[0] == null)
+        {
+            Debug.LogError("Lightbulb OFF material is null!");
+            return false;
+        }
+        
+        // Check for null renderer references
+        for (int i = 0; i < lightbulbRenderers.Length; i++)
+        {
+            if (lightbulbRenderers[i] == null)
+            {
+                Debug.LogWarning($"Lightbulb renderer [{i}] is null!");
+            }
+        }
+        
+        Debug.Log($"Lightbulb validation passed: {lightbulbRenderers.Length} renderers, shared materials (ON: {lightbulbOnMaterials[0].name}, OFF: {lightbulbOffMaterials[0].name})");
+        return true;
+    }
+    
     // Call this when player interacts with the cable
     public void InteractWithCable()
     {
         Debug.Log($"Cable interaction triggered. Current state - Connected: {cableConnected}");
-        
+
         if (!cableConnected)
         {
             Debug.Log("Connecting cable - starting animation");
@@ -232,10 +380,16 @@ public class ElectricityClueSystem : MonoBehaviour
         StartCoroutine(PowerOnAfterSparks());
     }
     
+    // Public method for ElectricityInteractable to check if cable is connected
+    public bool IsCableConnected()
+    {
+        return cableConnected;
+    }
+
     private void TriggerSparkEffect()
     {
         if (sparkEffect != null)
-        {            
+        {
             // Play the spark effect
             sparkEffect.Play();
             Debug.Log("Spark effect triggered at cable connection!");
@@ -254,7 +408,7 @@ public class ElectricityClueSystem : MonoBehaviour
         // Then power on the lights
         PowerOn();
     }
-
+    
     private void PowerOn()
     {
         Debug.Log("PowerOn() called - starting power sequence");
@@ -272,36 +426,99 @@ public class ElectricityClueSystem : MonoBehaviour
             GameInteractionDialogueManager.Instance.OnElectricityConnected();
         }
 
-        // Turn on lights with a brief delay between them for effect
-        StartCoroutine(SequentialLightUp());
+        // Check if lockdown is active to determine behavior
+        LockdownManager lockdownManager = FindObjectOfType<LockdownManager>();
+        bool isLockdownActive = lockdownManager != null && lockdownManager.GetCurrentPhase() != LockdownManager.LockdownPhase.Normal;
 
-        // Turn on registered servers
-        if (useServerRackSystem)
+        if (isLockdownActive)
         {
-            if (debugServerSystem)
+            Debug.Log("Lockdown detected - initiating momentary power-on sequence");
+            StartCoroutine(PostLockdownPowerSequence());
+            // Note: PostLockdownPowerSequence() handles its own server activation
+        }
+        else
+        {
+            Debug.Log("Normal phase - initiating standard power-on sequence");
+            // Turn on lights and lightbulbs with synchronized timing
+            StartCoroutine(SequentialLightUp());
+
+            // Turn on registered servers (only during normal phase)
+            if (useServerRackSystem)
             {
-                Debug.Log($"Attempting to power on {(serversToActivate != null ? serversToActivate.Length : 0)} registered servers");
-            }
-            
-            if (serversToActivate != null && serversToActivate.Length > 0)
-            {
-                StartCoroutine(ActivateRegisteredServers());
+                if (debugServerSystem)
+                {
+                    Debug.Log($"Attempting to power on {(serversToActivate != null ? serversToActivate.Length : 0)} registered servers");
+                }
+
+                if (serversToActivate != null && serversToActivate.Length > 0)
+                {
+                    StartCoroutine(ActivateRegisteredServers());
+                }
+                else
+                {
+                    Debug.LogWarning("No servers registered for activation in ElectricityClueSystem!");
+                }
             }
             else
             {
-                Debug.LogWarning("No servers registered for activation in ElectricityClueSystem!");
+                Debug.Log("Server rack system disabled in ElectricityClueSystem");
+            }
+
+            // Register lightbulbs with lockdown manager for future lockdown events
+            RegisterLightbulbsWithLockdown();
+        }
+    }
+    
+    private void RegisterLightbulbsWithLockdown()
+    {
+        if (lightbulbsRegisteredWithLockdown || lightbulbRenderers == null || lightbulbRenderers.Length == 0)
+            return;
+            
+        // Find lockdown manager
+        LockdownManager lockdownManager = FindObjectOfType<LockdownManager>();
+        if (lockdownManager != null)
+        {
+            // Create arrays for lockdown registration - each lightbulb uses the same shared materials
+            Material[] onMaterials = new Material[lightbulbRenderers.Length];
+            Material[] offMaterials = new Material[lightbulbRenderers.Length];
+            
+            Material sharedOnMaterial = lightbulbOnMaterials[0];
+            Material sharedOffMaterial = lightbulbOffMaterials[0];
+            
+            for (int i = 0; i < lightbulbRenderers.Length; i++)
+            {
+                onMaterials[i] = sharedOnMaterial;
+                offMaterials[i] = sharedOffMaterial;
+            }
+            
+            // Add our lightbulbs to the lockdown system
+            lockdownManager.AddCeilingLights(lightbulbRenderers, onMaterials, offMaterials);
+            lightbulbsRegisteredWithLockdown = true;
+            Debug.Log($"Registered {lightbulbRenderers.Length} electricity-area lightbulbs with LockdownManager using shared materials");
+            
+            // If lockdown is already active, immediately apply lockdown state to our newly registered lightbulbs
+            if (lockdownManager.GetCurrentPhase() != LockdownManager.LockdownPhase.Normal)
+            {
+                Debug.Log("Lockdown already active - applying lockdown state to newly connected lightbulbs");
+                for (int i = 0; i < lightbulbRenderers.Length; i++)
+                {
+                    if (lightbulbRenderers[i] != null)
+                    {
+                        lightbulbRenderers[i].material = sharedOffMaterial;
+                    }
+                }
             }
         }
         else
         {
-            Debug.Log("Server rack system disabled in ElectricityClueSystem");
+            Debug.LogWarning("LockdownManager not found - lightbulbs will not participate in lockdown events");
         }
-    }
-    
+    }   
+
     private IEnumerator ActivateRegisteredServers()
     {
         Debug.Log($"Starting server activation sequence for {serversToActivate.Length} servers");
-        
+
         int activatedCount = 0;
         for (int i = 0; i < serversToActivate.Length; i++)
         {
@@ -312,11 +529,11 @@ public class ElectricityClueSystem : MonoBehaviour
                 {
                     Debug.Log($"Activating server [{i}] {server.gameObject.name} - Current state: {server.GetCurrentState()}");
                 }
-                
+
                 // Power on the server (change from PoweredOff to Normal)
                 server.SetState(ServerRackMaterialController.ServerState.Normal);
                 activatedCount++;
-                
+
                 // Small delay between activations for visual effect
                 if (serverActivationDelay > 0 && i < serversToActivate.Length - 1)
                 {
@@ -328,9 +545,9 @@ public class ElectricityClueSystem : MonoBehaviour
                 Debug.LogWarning($"Server [{i}] is null! Please assign all server references in the inspector.");
             }
         }
-        
+
         Debug.Log($"Server activation complete! Activated {activatedCount} out of {serversToActivate.Length} servers");
-        
+
         if (debugServerSystem)
         {
             // Show updated states after a brief delay
@@ -349,29 +566,57 @@ public class ElectricityClueSystem : MonoBehaviour
     
     private IEnumerator SequentialLightUp()
     {
-        // Turn on area lights first
-        foreach (Light light in areaLights)
+        Debug.Log("Starting sequential light activation");
+        
+        // Validate that we have valid lightbulbs
+        bool hasValidLightbulbs = ValidateLightbulbArrays();
+        int lightCount = areaLights?.Length ?? 0;
+        int lightbulbCount = lightbulbRenderers?.Length ?? 0;
+        
+        if (hasValidLightbulbs && lightCount != lightbulbCount)
         {
-            if (light != null)
-            {
-                light.enabled = true;
-                // Optional: Fade in the light
-                StartCoroutine(FadeInLight(light, areaLightIntensity, 0.5f));
-                yield return new WaitForSeconds(0.2f);
-            }
+            Debug.LogWarning($"Mismatch between area lights ({lightCount}) and lightbulbs ({lightbulbCount}). " +
+                           "Lights and lightbulbs should be paired for synchronized activation.");
         }
         
-        yield return new WaitForSeconds(0.5f);
+        int maxCount = Mathf.Max(lightCount, lightbulbCount);
         
-        // Then turn on server lights
-        foreach (Light light in serverLights)
+        // Get shared materials for all lightbulbs
+        Material onMaterial = hasValidLightbulbs ? lightbulbOnMaterials[0] : null;
+        
+        for (int i = 0; i < maxCount; i++)
         {
-            if (light != null)
+            // Activate area light (if exists)
+            if (areaLights != null && i < areaLights.Length && areaLights[i] != null)
             {
-                light.enabled = true;
-                light.color = lightColor;
-                // Optional: Fade in the light
-                StartCoroutine(FadeInLight(light, lightIntensity, 0.3f));
+                Debug.Log($"Turning on area light [{i}] {areaLights[i].gameObject.name}");
+                areaLights[i].enabled = true; // ← ENABLE THE LIGHT FIRST!
+                StartCoroutine(FadeInLight(areaLights[i], areaLightIntensity, 0.3f));
+            }
+            
+            // Activate lightbulb material (if exists) - happens immediately at start of light fade
+            if (hasValidLightbulbs && i < lightbulbRenderers.Length && 
+                lightbulbRenderers[i] != null && onMaterial != null)
+            {
+                lightbulbRenderers[i].material = onMaterial;
+                Debug.Log($"Switched lightbulb [{i}] {lightbulbRenderers[i].gameObject.name} to ON material");
+            }
+            
+            // Wait before next light activation
+            yield return new WaitForSeconds(0.1f);
+        }
+        
+        // Mark that area lights are now on
+        areaLightsCurrentlyOn = true;
+
+        // Activate server lights with same timing
+        for (int i = 0; i < serverLights.Length; i++)
+        {
+            if (serverLights[i] != null)
+            {
+                serverLights[i].enabled = true; // ← ENABLE THE LIGHT FIRST!
+                serverLights[i].color = lightColor; // Set color
+                StartCoroutine(FadeInLight(serverLights[i], lightIntensity, 0.3f));
                 yield return new WaitForSeconds(0.1f);
             }
         }
@@ -380,13 +625,154 @@ public class ElectricityClueSystem : MonoBehaviour
         
         // Finally reveal the clue
         RevealClue();
+        
+        Debug.Log("Sequential light activation complete");
     }
     
+    private IEnumerator PostLockdownPowerSequence()
+    {
+        // Phase 1: Turn everything on momentarily (2 seconds of hope)
+        Debug.Log("Phase 1: Momentary power activation - giving false hope");
+        
+        Material onMaterial = ValidateLightbulbArrays() ? lightbulbOnMaterials[0] : null;
+        
+        // Turn on all lights and swap all lightbulb materials to ON simultaneously
+        for (int i = 0; i < areaLights.Length; i++)
+        {
+            if (areaLights[i] != null)
+            {
+                areaLights[i].enabled = true;
+                areaLights[i].intensity = areaLightIntensity;
+                Debug.Log($"Momentarily turned on area light [{i}] {areaLights[i].gameObject.name}");
+            }
+        }
+        
+        for (int i = 0; i < lightbulbRenderers.Length; i++)
+        {
+            if (lightbulbRenderers[i] != null && onMaterial != null)
+            {
+                lightbulbRenderers[i].material = onMaterial;
+                Debug.Log($"Momentarily switched lightbulb [{i}] {lightbulbRenderers[i].gameObject.name} to ON material");
+            }
+        }
+        
+        // Also turn on server lights for the full effect
+        for (int i = 0; i < serverLights.Length; i++)
+        {
+            if (serverLights[i] != null)
+            {
+                serverLights[i].enabled = true;
+                serverLights[i].color = lightColor;
+                serverLights[i].intensity = lightIntensity;
+            }
+        }
+
+        // Turn on registered servers (momentarily switch to Normal materials)
+        if (useServerRackSystem && serversToActivate != null && serversToActivate.Length > 0)
+        {
+            Debug.Log($"Momentarily activating {serversToActivate.Length} servers to Normal state");
+            for (int i = 0; i < serversToActivate.Length; i++)
+            {
+                var server = serversToActivate[i];
+                if (server != null)
+                {
+                    server.SetState(ServerRackMaterialController.ServerState.Normal);
+                    Debug.Log($"Momentarily activated server [{i}] {server.gameObject.name} to Normal state");
+                }
+            }
+        }
+        // if (useServerRackSystem && serversToActivate != null && serversToActivate.Length > 0)
+        // {
+        //     Debug.Log($"Reverting {serversToActivate.Length} servers back to Emergency/Lockdown state");
+        //     for (int i = 0; i < serversToActivate.Length; i++)
+        //     {
+        //         var server = serversToActivate[i];
+        //         if (server != null)
+        //         {
+        //             // Log current state before changing
+        //             var currentState = server.GetCurrentState();
+        //             Debug.Log($"Server [{i}] {server.gameObject.name} current state: {currentState} -> changing to Emergency");
+                    
+        //             server.SetState(ServerRackMaterialController.ServerState.Emergency);
+                    
+        //             // Verify the change worked
+        //             var newState = server.GetCurrentState();
+        //             Debug.Log($"Server [{i}] {server.gameObject.name} new state: {newState}");
+                    
+        //             if (newState != ServerRackMaterialController.ServerState.Emergency)
+        //             {
+        //                 Debug.LogWarning($"Server [{i}] {server.gameObject.name} failed to change to Emergency state! Still: {newState}");
+        //             }
+        //         }
+        //         else
+        //         {
+        //             Debug.LogWarning($"Server [{i}] is null - cannot revert to Emergency state");
+        //         }
+        //     }
+        // }
+
+        // Reveal clue during the hope phase (clue logic should remain the same)
+        RevealClue();
+        
+        // Wait for 3 seconds of "false hope"
+        yield return new WaitForSeconds(3f);
+        
+        // Phase 2: Lockdown reasserts - turn everything back off
+        Debug.Log("Phase 2: Lockdown reasserting - hope crushed");
+        
+        Material offMaterial = ValidateLightbulbArrays() ? lightbulbOffMaterials[0] : null;
+        
+        // Turn off all lights and swap lightbulb materials back to OFF
+        for (int i = 0; i < areaLights.Length; i++)
+        {
+            if (areaLights[i] != null)
+            {
+                areaLights[i].enabled = false;
+                Debug.Log($"Lockdown turned off area light [{i}] {areaLights[i].gameObject.name}");
+            }
+        }
+        
+        for (int i = 0; i < lightbulbRenderers.Length; i++)
+        {
+            if (lightbulbRenderers[i] != null && offMaterial != null)
+            {
+                lightbulbRenderers[i].material = offMaterial;
+                Debug.Log($"Lockdown switched lightbulb [{i}] {lightbulbRenderers[i].gameObject.name} back to OFF material");
+            }
+        }
+        
+        // Turn off server lights too
+        for (int i = 0; i < serverLights.Length; i++)
+        {
+            if (serverLights[i] != null)
+            {
+                serverLights[i].enabled = false;
+            }
+        }
+        
+        // Revert registered servers back to Emergency/Lockdown state
+        if (useServerRackSystem && serversToActivate != null && serversToActivate.Length > 0)
+        {
+            Debug.Log($"Reverting {serversToActivate.Length} servers back to Emergency/Lockdown state");
+            for (int i = 0; i < serversToActivate.Length; i++)
+            {
+                var server = serversToActivate[i];
+                if (server != null)
+                {
+                    server.SetState(ServerRackMaterialController.ServerState.Emergency);
+                    Debug.Log($"Reverted server [{i}] {server.gameObject.name} back to Emergency state");
+                }
+            }
+        }
+
+        Debug.Log("Post-lockdown power sequence complete - back to lockdown state");
+    }
+
     private IEnumerator FadeInLight(Light light, float targetIntensity, float duration)
     {
         float startIntensity = 0;
         light.intensity = startIntensity;
-        
+
         float time = 0;
         while (time < duration)
         {
@@ -394,7 +780,7 @@ public class ElectricityClueSystem : MonoBehaviour
             light.intensity = Mathf.Lerp(startIntensity, targetIntensity, time / duration);
             yield return null;
         }
-        
+
         light.intensity = targetIntensity;
     }
     
@@ -478,6 +864,20 @@ public class ElectricityClueSystem : MonoBehaviour
         }
     }
     
+    [ContextMenu("Test Lightbulb Activation")]
+    private void TestLightbulbActivation()
+    {
+        if (ValidateLightbulbArrays())
+        {
+            Debug.Log("Testing lightbulb material swapping");
+            StartCoroutine(SequentialLightUp());
+        }
+        else
+        {
+            Debug.LogWarning("Lightbulb arrays not properly configured!");
+        }
+    }
+
     [ContextMenu("Show Registered Server States")]
     private void ShowRegisteredServerStates()
     {

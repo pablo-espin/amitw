@@ -10,6 +10,12 @@ public class ElectricityInteractable : MonoBehaviour
     
     public string GetInteractionPrompt()
     {
+        // Check if cable is already connected
+        if (electricityClueSystem != null && electricityClueSystem.IsCableConnected())
+        {
+            return null; // or return ""; - both will prevent prompt from showing
+        }
+
         return interactionPrompt;
     }
     

@@ -465,16 +465,90 @@ public class LockdownManager : MonoBehaviour
         return Vector3.zero;
     }
     
+    // Dynamically adds ceiling lights/lightbulbs to the lockdown system
+    // Called by ElectricityClueSystem after power connection
+    // <param name="newRenderers">Array of lightbulb renderers to add</param>
+    // <param name="onMaterials">Materials to use for "on" state</param>
+    // <param name="offMaterials">Materials to use for "off"/lockdown state</param>
+    public void AddCeilingLights(MeshRenderer[] newRenderers, Material[] onMaterials, Material[] offMaterials)
+    {
+        if (newRenderers == null || onMaterials == null || offMaterials == null)
+        {
+            Debug.LogError("Cannot add ceiling lights - null arrays provided");
+            return;
+        }
+        
+        if (newRenderers.Length != onMaterials.Length || newRenderers.Length != offMaterials.Length)
+        {
+            Debug.LogError($"Array length mismatch when adding ceiling lights! " +
+                        $"Renderers: {newRenderers.Length}, On: {onMaterials.Length}, Off: {offMaterials.Length}");
+            return;
+        }
+        
+        Debug.Log($"Adding {newRenderers.Length} new ceiling lights to lockdown system");
+        
+        // Expand the existing arrays to include the new lights
+        List<MeshRenderer> rendererList = new List<MeshRenderer>(ceilingLightRenderers);
+        List<Material> normalMaterialList = new List<Material>(normalCeilingLightMaterials);
+        List<Material> lockdownMaterialList = new List<Material>(lockdownCeilingLightMaterials);
+        
+        // Add the new lights
+        for (int i = 0; i < newRenderers.Length; i++)
+        {
+            if (newRenderers[i] != null)
+            {
+                rendererList.Add(newRenderers[i]);
+                normalMaterialList.Add(onMaterials[i]);
+                lockdownMaterialList.Add(offMaterials[i]);
+                
+                Debug.Log($"Added lightbulb {newRenderers[i].gameObject.name} to lockdown system");
+            }
+            else
+            {
+                Debug.LogWarning($"Null renderer at index {i} - skipping");
+            }
+        }
+        
+        // Update the arrays
+        ceilingLightRenderers = rendererList.ToArray();
+        normalCeilingLightMaterials = normalMaterialList.ToArray();
+        lockdownCeilingLightMaterials = lockdownMaterialList.ToArray();
+        
+        // If lockdown is currently active, immediately apply lockdown materials to new lights
+        if (currentPhase != LockdownPhase.Normal)
+        {
+            Debug.Log("Lockdown active - immediately applying lockdown materials to newly added lights");
+            ApplyLockdownMaterialsToNewLights(newRenderers, offMaterials);
+        }
+        else
+        {
+            Debug.Log("Normal phase - new lights will maintain their current state");
+        }
+    }
+
+    // Apply lockdown materials to newly added lights when lockdown is already active
+    private void ApplyLockdownMaterialsToNewLights(MeshRenderer[] renderers, Material[] lockdownMaterials)
+    {
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null && lockdownMaterials[i] != null)
+            {
+                renderers[i].material = lockdownMaterials[i];
+                Debug.Log($"Applied lockdown material to {renderers[i].gameObject.name}");
+            }
+        }
+    }
+
     private void EndGame()
     {
         Debug.Log("Final lockdown complete - Player trapped");
-        
+
         // Stop ambient sounds
         if (ambientSoundCoroutine != null)
         {
             StopCoroutine(ambientSoundCoroutine);
         }
-        
+
         // Show trapped ending
         if (hudManager != null)
         {
@@ -485,7 +559,7 @@ public class LockdownManager : MonoBehaviour
     // Public getters
     public float GetGameTime() => lockdownTimer;
     public float GetLockdownTime() => totalLockdownTime;
-    public LockdownPhase GetCurrentPhase() => currentPhase;
+    public LockdownPhase GetCurrentPhase() => currentPhase; // Used by ElectricityClueSystem
     public bool IsLockdownStarted() => lockdownStarted;
     
     // Convert real time to game time format (5:00 PM to 6:00 PM)
