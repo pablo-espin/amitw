@@ -433,12 +433,18 @@ public class ElectricityClueSystem : MonoBehaviour
         if (clueRevealed) return;
         
         clueRevealed = true;
-        
+
+        // Show code found text
+        if (ItemFoundFeedbackManager.Instance != null)
+        {
+            ItemFoundFeedbackManager.Instance.ShowCodeFoundSequence();
+        }
+
         // Show clue text
         if (clueTextObject)
         {
             clueTextObject.SetActive(true);
-            
+
             // Get the text renderer
             TMPro.TextMeshPro textMesh = clueTextObject.GetComponent<TMPro.TextMeshPro>();
             if (textMesh != null)

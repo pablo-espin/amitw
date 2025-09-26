@@ -183,29 +183,24 @@ public class LocationClueSystem : MonoBehaviour
             interactionManager.SetInteractionEnabled(true);
         }
         
-        // Re-lock cursor for gameplay
-        // Cursor.lockState = CursorLockMode.Locked;
-        // Cursor.visible = false;
-
-        // Use CursorManager instead
-        // if (CursorManager.Instance != null)
-        // {
-        //     CursorManager.Instance.RequestCursorLock("LocationClueSystem");
-        // }
-
         // Enable player input
         if (uiInputController != null)
         {
             uiInputController.EnableGameplayInput();
         }
+
+        // Check if clue should be revealed now that UI is closed
+        if (locationListExamined && transportCardExamined && !clueRevealed)
+        {
+            RevealClue();
+        }
     }
     
     private void CheckClueReveal()
     {
-        // If both documents have been examined and clue not already revealed
         if (locationListExamined && transportCardExamined && !clueRevealed)
         {
-            RevealClue();
+            Debug.Log("Both documents examined - clue ready to reveal when UI closes");
         }
     }
     
@@ -217,6 +212,12 @@ public class LocationClueSystem : MonoBehaviour
         if (clueProgressUI != null)
         {
             clueProgressUI.SolveClue("location", locationClueCode);
+        }
+
+        // Then show code found feedback
+        if (ItemFoundFeedbackManager.Instance != null)
+        {
+            ItemFoundFeedbackManager.Instance.ShowCodeFoundSequence();
         }
         
         // Log for debugging

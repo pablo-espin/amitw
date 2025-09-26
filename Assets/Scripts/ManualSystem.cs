@@ -172,10 +172,10 @@ public class ManualSystem : MonoBehaviour
         if (uiInputController != null)
             uiInputController.DisableGameplayInput();
     }
-    
+
     // Close the manual
     public void CloseManual()
-    {        
+    {
         if (manualPanel != null)
             manualPanel.SetActive(false);
 
@@ -188,11 +188,11 @@ public class ManualSystem : MonoBehaviour
         // Re-enable player interaction
         if (interactionManager != null)
             interactionManager.SetInteractionEnabled(true);
-        
+
         // Enable player input
         if (uiInputController != null)
             uiInputController.EnableGameplayInput();
-            
+
         // If this is the first time closing the manual, show the HUD indicator    
         if (manualFound && mapHUDIndicator != null && !mapHUDIndicator.activeSelf)
         {
@@ -203,6 +203,12 @@ public class ManualSystem : MonoBehaviour
             if (indicatorScript != null)
             {
                 indicatorScript.StartPulseHighlight();
+            }
+
+            // Show manual found text
+            if (ItemFoundFeedbackManager.Instance != null)
+            {
+                ItemFoundFeedbackManager.Instance.ShowManualFoundSequence();
             }
         }
     }

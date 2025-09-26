@@ -41,6 +41,12 @@ public class KeyCardAccessManager : MonoBehaviour
         
         // Trigger event
         OnKeyCardAcquired?.Invoke();
+
+        // Show key card found text
+        if (ItemFoundFeedbackManager.Instance != null)
+        {
+            ItemFoundFeedbackManager.Instance.ShowKeycardFoundSequence();
+        }
         
         Debug.Log("Key card acquired!");
     }

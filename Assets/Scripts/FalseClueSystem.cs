@@ -261,28 +261,28 @@ public class FalseClueSystem : MonoBehaviour
         // Start matrix effect after a delay
         StartCoroutine(ShowMatrixEffectDelayed(3.0f));
     }
-    
+
     private IEnumerator ShowMatrixEffectDelayed(float delay)
     {
         yield return new WaitForSeconds(delay);
-        
+
         // Hide all panels
         if (captchaPanel != null) captchaPanel.SetActive(false);
         if (catVideoPanel != null) catVideoPanel.SetActive(false);
         if (cluePanel != null) cluePanel.SetActive(false);
-        
+
         // Show matrix effect
         if (matrixEffectPanel != null)
         {
             matrixEffectPanel.SetActive(true);
-            
+
             // Play matrix animation sound
             if (InteractionSoundManager.Instance != null)
             {
                 InteractionSoundManager.Instance.StartMatrixAnimation();
             }
         }
-        
+
         // Automatically close computer after another delay
         yield return new WaitForSeconds(5.0f);
 
@@ -293,6 +293,12 @@ public class FalseClueSystem : MonoBehaviour
         }
 
         CloseComputer();
+        
+        // Show code found text
+        if (ItemFoundFeedbackManager.Instance != null)
+        {
+            ItemFoundFeedbackManager.Instance.ShowCodeFoundSequence();
+        }
     }
     
     private void RevealClue()

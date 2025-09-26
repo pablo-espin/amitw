@@ -400,9 +400,15 @@ public class WaterClueSystem : MonoBehaviour
     private void RevealClue()
     {
         clueRevealed = true;
+
+        // Show code found text
+        if (ItemFoundFeedbackManager.Instance != null)
+        {
+            ItemFoundFeedbackManager.Instance.ShowCodeFoundSequence();
+        }
         
         // Show clue text and ensure it stays visible permanently
-        if (clueTextObject) 
+        if (clueTextObject)
         {
             clueTextObject.SetActive(true);
             Debug.Log("Water clue text revealed and activated: " + clueTextObject.name);
