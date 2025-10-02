@@ -11,6 +11,7 @@ public class VisualProgressRing : MonoBehaviour
     [SerializeField] private Image glowRingImage; // Glow ring
     [SerializeField] private Image progressRingBackgroundImage; // Ring background
     [SerializeField] private TextMeshProUGUI progressCounterText;
+    [SerializeField] private TextMeshProUGUI codesEnteredLabelText;
     
     [Header("Visual Settings")]
     [SerializeField] private float ringFillDuration = 0.8f;
@@ -376,6 +377,7 @@ public class VisualProgressRing : MonoBehaviour
         {
             progressCounterText.text = "";
             progressCounterText.color = computerCodeColor;
+            codesEnteredLabelText.text = "";
         }
         else
         {
