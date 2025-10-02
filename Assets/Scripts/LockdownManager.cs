@@ -206,7 +206,7 @@ public class LockdownManager : MonoBehaviour
         }
 
         // Start the sequenced lighting transitions
-        StartCoroutine(SequencedLightingTransition());
+        // StartCoroutine(SequencedLightingTransition());
 
         // Switch to lockdown lighting
         // StartCoroutine(TransitionToLockdownLighting());
@@ -410,6 +410,9 @@ public class LockdownManager : MonoBehaviour
         currentPhase = LockdownPhase.FinalLockdown;
 
         Debug.Log("Final lockdown phase - Escape window closed");
+
+        // Start full sequenced light transition
+        StartCoroutine(SequencedLightingTransition());
 
         // Disable exit door
         if (exitDoor != null)
