@@ -21,7 +21,7 @@ public class CutsceneSkipManager : MonoBehaviour
     [SerializeField] private float skipTransitionTime = 1.5f; // Fade time when skipping
     
     [Header("References")]
-    [SerializeField] private SimpleCutscenePlayer cutscenePlayer;
+    [SerializeField] private MonoBehaviour cutscenePlayer;
     [SerializeField] private Image fadePanel; // Should be the same fade panel from cutscene player
     
     // Input handling
@@ -178,10 +178,19 @@ public class CutsceneSkipManager : MonoBehaviour
             skipMessageUI.SetActive(false);
         }
         
-        // Stop the cutscene player and start skip transition
+        // Stop the cutscene player - use reflection to call StopCutscene on any type
         if (cutscenePlayer != null)
         {
-            cutscenePlayer.StopCutscene();
+            // Try to invoke StopCutscene method
+            var method = cutscenePlayer.GetType().GetMethod("StopCutscene");
+            if (method != null)
+            {
+                method.Invoke(cutscenePlayer, null);
+            }
+            else
+            {
+                Debug.LogWarning("CutsceneSkipManager: Could not find StopCutscene method on cutscene player!");
+            }
         }
         
         StartCoroutine(SkipTransition());
