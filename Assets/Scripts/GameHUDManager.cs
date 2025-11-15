@@ -38,9 +38,9 @@ public class GameHUDManager : MonoBehaviour
 
     [Header("Outcome Panel")]
     [SerializeField] private GameObject outcomePanel;
+    [SerializeField] private EnhancedStatsPanel enhancedStatsPanel;
     [SerializeField] private TextMeshProUGUI outcomeTitle;
     [SerializeField] private TextMeshProUGUI outcomeDescription;
-    [SerializeField] private TextMeshProUGUI statsText;
     [SerializeField] private Button learnMoreButton;
     [SerializeField] private Button playAgainButton;
     [SerializeField] private Button exitGameButton;
@@ -577,7 +577,7 @@ public class GameHUDManager : MonoBehaviour
         }
 
         // Show outcome panel with regular stats
-        ShowOutcomePanel(successTitle, successDescription, GenerateStats());
+        ShowEnhancedOutcomePanel(successTitle, successDescription);
     }
 
     private void ShowCorruptionOutcome()
@@ -601,7 +601,7 @@ public class GameHUDManager : MonoBehaviour
         }
 
         // Show outcome panel with regular stats
-        ShowOutcomePanel(corruptionTitle, corruptionDescription, GenerateStats());
+        ShowEnhancedOutcomePanel(corruptionTitle, corruptionDescription);
     }
 
     private void ShowComputerCodeChoice()
@@ -686,26 +686,26 @@ public class GameHUDManager : MonoBehaviour
     private void ShowTimeoutOutcome()
     {
         // Show outcome panel for deleted memory
-        ShowOutcomePanel(timeoutTitle, timeoutDescription, GenerateStats());
+        ShowEnhancedOutcomePanel(timeoutTitle, timeoutDescription);
     }
 
     public void ShowEscapeOutcome()
     {
         // Use contextual stats for escape ending
-        string contextualStats = GenerateStatsForEnding(isEscapeEnding: true);
-        ShowOutcomePanel(escapeTitle, escapeDescription, contextualStats);
+        //string contextualStats = GenerateStatsForEnding(isEscapeEnding: true);
+        ShowEnhancedOutcomePanel(escapeTitle, escapeDescription);
     }
 
     public void ShowHeroicLockdownOutcome()
     {
         // Use contextual stats for heroic ending
-        string contextualStats = GenerateStatsForEnding(isHeroicEnding: true);
-        ShowOutcomePanel(heroicLockdownTitle, heroicLockdownDescription, contextualStats);
+        //string contextualStats = GenerateStatsForEnding(isHeroicEnding: true);
+        ShowEnhancedOutcomePanel(heroicLockdownTitle, heroicLockdownDescription);
     }
 
     public void ShowTrappedOutcome()
     {
-        ShowOutcomePanel(trappedTitle, trappedDescription, GenerateStats());
+        ShowEnhancedOutcomePanel(trappedTitle, trappedDescription);
     }
 
     private void ShowRebelliousOutcome()
@@ -717,7 +717,7 @@ public class GameHUDManager : MonoBehaviour
         }
 
         // Generate stats before stopping tracking to get the final values with multiplier
-        string finalStats = GenerateStats();
+        // string finalStats = GenerateStats();
 
         // Stop stats tracking after getting final stats
         if (statsSystem != null)
@@ -725,45 +725,45 @@ public class GameHUDManager : MonoBehaviour
             statsSystem.StopStatsTracking();
         }
 
-        ShowOutcomePanel(rebelliousTitle, rebelliousDescription, GenerateStats());
+        ShowEnhancedOutcomePanel(rebelliousTitle, rebelliousDescription);
     }
 
-    private void ShowOutcomePanel(string title, string description, string stats)
-    {
-        if (statsSystem != null)
-        {
-            statsSystem.StopStatsTracking();
-        }
+    // private void ShowOutcomePanel(string title, string description, string stats)
+    // {
+    //     if (statsSystem != null)
+    //     {
+    //         statsSystem.StopStatsTracking();
+    //     }
 
-        if (outcomePanel != null)
-        {
-            outcomePanel.SetActive(true);
+    //     if (outcomePanel != null)
+    //     {
+    //         outcomePanel.SetActive(true);
 
-            // Register with UI state manager
-            if (UIStateManager.Instance != null)
-            {
-                UIStateManager.Instance.RegisterOpenUI("OutcomePanel");
-            }
+    //         // Register with UI state manager
+    //         if (UIStateManager.Instance != null)
+    //         {
+    //             UIStateManager.Instance.RegisterOpenUI("OutcomePanel");
+    //         }
 
-            if (outcomeTitle != null)
-            {
-                outcomeTitle.text = title;
-            }
+    //         if (outcomeTitle != null)
+    //         {
+    //             outcomeTitle.text = title;
+    //         }
 
-            if (outcomeDescription != null)
-            {
-                outcomeDescription.text = description;
-            }
+    //         if (outcomeDescription != null)
+    //         {
+    //             outcomeDescription.text = description;
+    //         }
 
-            if (statsText != null)
-            {
-                statsText.text = stats;
-            }
-        }
+    //         if (statsText != null)
+    //         {
+    //             statsText.text = stats;
+    //         }
+    //     }
 
-        // Pause the game
-        PauseGame();
-    }
+    //     // Pause the game
+    //     PauseGame();
+    // }
 
     private void PauseGame()
     {
@@ -939,31 +939,73 @@ public class GameHUDManager : MonoBehaviour
 
     }
 
-    // Generate regular stats
-    private string GenerateStats()
+    private void ShowEnhancedOutcomePanel(string title, string description)
     {
+        // Stop stats tracking
         if (statsSystem != null)
         {
-            return statsSystem.GetFormattedStats();
+            statsSystem.StopStatsTracking();
+        }
+
+        // Get stats data
+        float energyMWh = statsSystem != null ? statsSystem.GetTotalEnergyMWh() : 0f;
+        float waterLiters = statsSystem != null ? statsSystem.GetTotalWaterLiters() : 0f;
+        float co2Kg = statsSystem != null ? statsSystem.GetTotalCO2Kg() : 0f;
+
+        // Get clues found count
+        int cluesFound = clueProgressUI != null ? clueProgressUI.GetDiscoveredClueCount() : 0;
+
+        // Activate outcome panel
+        if (outcomePanel != null)
+        {
+            outcomePanel.SetActive(true);
+
+            // Register with UI state manager
+            if (UIStateManager.Instance != null)
+            {
+                UIStateManager.Instance.RegisterOpenUI("OutcomePanel");
+            }
+        }
+
+        // Show enhanced stats panel
+        if (enhancedStatsPanel != null)
+        {
+            enhancedStatsPanel.ShowEnhancedStats(title, description, cluesFound, energyMWh, waterLiters, co2Kg);
         }
         else
         {
-            return "Stats system not available";
+            Debug.LogError("EnhancedStatsPanel reference not set in GameHUDManager!");
         }
+
+        // Pause the game
+        PauseGame();
     }
 
+    // Generate regular stats
+    // private string GenerateStats()
+    // {
+    //     if (statsSystem != null)
+    //     {
+    //         return statsSystem.GetFormattedStats();
+    //     }
+    //     else
+    //     {
+    //         return "Stats system not available";
+    //     }
+    // }
+
     // Generate contextual stats for different endings
-    private string GenerateStatsForEnding(bool isEscapeEnding = false, bool isHeroicEnding = false)
-    {
-        if (statsSystem != null)
-        {
-            return statsSystem.GetFormattedStats(isEscapeEnding, isHeroicEnding);
-        }
-        else
-        {
-            return "Stats system not available";
-        }
-    }
+    // private string GenerateStatsForEnding(bool isEscapeEnding = false, bool isHeroicEnding = false)
+    // {
+    //     if (statsSystem != null)
+    //     {
+    //         return statsSystem.GetFormattedStats(isEscapeEnding, isHeroicEnding);
+    //     }
+    //     else
+    //     {
+    //         return "Stats system not available";
+    //     }
+    // }
 
     // private string GenerateGarbledText()
     // {
@@ -980,7 +1022,7 @@ public class GameHUDManager : MonoBehaviour
 
     //     return result.ToString();
     // }
-    
+
     private IEnumerator DelayedSuccessOutcome()
     {
         yield return new WaitForSeconds(2.5f); // Wait for completion animation

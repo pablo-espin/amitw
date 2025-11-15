@@ -165,10 +165,21 @@ public class ClueProgressUI : MonoBehaviour
     {
         return waterClueSolved && electricityClueSolved && locationClueSolved;
     }
-    
+
     // Check if false clue is discovered
     public bool IsFalseClueDiscovered()
     {
         return falseClueDiscovered;
+    }
+    
+    public int GetDiscoveredClueCount()
+    {
+        int count = 0;
+        
+        if (waterClueSolved) count++;
+        if (electricityClueSolved) count++;
+        if (locationClueSolved) count++;
+        
+        return count;
     }
 }
