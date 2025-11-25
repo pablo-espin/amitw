@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4ff00debbcdccf48914bb696d5292df, type: 3}
+  m_Name: LeakConsequences
+  m_EditorClassIdentifier: 
+  dialogueID: leak_consequences
+  audioClip: {fileID: 0}
+  segments:
+  - text: But think about the consequences. Imagine it falls into the wrong hands...
+      what a catastrophe.
+    startTime: 0
+    endTime: 5
+  languageCode: en

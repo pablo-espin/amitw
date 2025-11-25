@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4ff00debbcdccf48914bb696d5292df, type: 3}
+  m_Name: Leak
+  m_EditorClassIdentifier: 
+  dialogueID: leak
+  audioClip: {fileID: 0}
+  segments:
+  - text: You realise that the information is owned by this company, right? If anything
+      happens to this facility all will be lost.
+    startTime: 0
+    endTime: 6.5
+  - text: I know for a fact that what is stored here will solve lots of issues for
+      humanity.
+    startTime: 6.6
+    endTime: 11.7
+  - text: Political and social crises could be averted, long-sought advances in medicine...
+    startTime: 11.8
+    endTime: 17.7
+  - text: You have access to it now. Go on, take it with you, share it out there!
+    startTime: 17.8
+    endTime: 23.8
+  languageCode: en

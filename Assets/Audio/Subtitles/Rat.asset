@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4ff00debbcdccf48914bb696d5292df, type: 3}
+  m_Name: Rat
+  m_EditorClassIdentifier: 
+  dialogueID: rat_dialogue
+  audioClip: {fileID: 8300000, guid: 0fd8e544136db9f47b6032a30415f1f9, type: 3}
+  segments:
+  - text: There is a rodent problem.
+    startTime: 0
+    endTime: 1.7
+  languageCode: en

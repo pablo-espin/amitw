@@ -148,10 +148,20 @@ public class NarratorManager : MonoBehaviour
 
         // Add to played dialogues if it has an ID
         if (!string.IsNullOrEmpty(dialogueID))
+        {
             playedDialogueIDs.Add(dialogueID);
+        }
+
+        // Trigger subtitles after audio starts
+        if (SubtitleManager.Instance != null)
+        {
+            SubtitleManager.Instance.PlaySubtitles(dialogueID);
+        }
 
         if (showDebugInfo)
+        {
             Debug.Log($"Narrator: Playing {dialogueID} ({clip.name})");
+        }
 
         return true;
     }
@@ -201,6 +211,12 @@ public class NarratorManager : MonoBehaviour
 
         narratorSource.Stop();
         currentlyPlaying = null;
+
+        // Stop subtitles
+        if (SubtitleManager.Instance != null)
+        {
+            SubtitleManager.Instance.StopSubtitles();
+        }
     }
 
     // Reset the narrator state (clear played dialogues)
@@ -210,6 +226,16 @@ public class NarratorManager : MonoBehaviour
         lastPlayedTime = -10f;
     }
     
+    // Get current playback time of the audio for subtitle sync. Returns current time in seconds, or 0 if not playing
+    public float GetPlaybackTime()
+    {
+        if (narratorSource != null && narratorSource.isPlaying)
+        {
+            return narratorSource.time;
+        }
+        return 0f;
+    }
+
     public void PauseAudio()
     {
         if (!audioIsPaused && narratorSource.isPlaying)

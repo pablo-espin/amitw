@@ -22,6 +22,9 @@ public class PauseMenuManager : MonoBehaviour
     [SerializeField] private Button restartButton;
     [SerializeField] private Button exitButton;
 
+    [Header("Subtitle Toggle")]
+    [SerializeField] private Toggle subtitleToggle;
+
     // References to managers
     private UIInputController uiInputController;
     private InteractionSoundManager interactionSoundManager;
@@ -84,6 +87,23 @@ public class PauseMenuManager : MonoBehaviour
 
             // Add listener
             masterVolumeSlider.onValueChanged.AddListener(OnVolumeChanged);
+        }
+
+        // Setup subtitle toggle
+        if (subtitleToggle)
+        {
+            // Get current subtitle preference (default: enabled)
+            bool subtitlesEnabled = PlayerPrefs.GetInt("SubtitlesEnabled", 1) == 1;
+            subtitleToggle.isOn = subtitlesEnabled;
+
+            // Apply current setting to SubtitleManager
+            if (SubtitleManager.Instance != null)
+            {
+                SubtitleManager.Instance.SetSubtitlesEnabled(subtitlesEnabled);
+            }
+
+            // Add listener
+            subtitleToggle.onValueChanged.AddListener(OnSubtitleToggleChanged);
         }
     }
 
@@ -286,6 +306,21 @@ public class PauseMenuManager : MonoBehaviour
 
         // You can add more audio systems here
         AudioListener.volume = volume; // Globally affects all audio
+    }
+
+    private void OnSubtitleToggleChanged(bool isEnabled)
+    {
+        // Save preference
+        PlayerPrefs.SetInt("SubtitlesEnabled", isEnabled ? 1 : 0);
+        PlayerPrefs.Save();
+
+        // Apply to SubtitleManager
+        if (SubtitleManager.Instance != null)
+        {
+            SubtitleManager.Instance.SetSubtitlesEnabled(isEnabled);
+        }
+
+        Debug.Log($"Subtitles {(isEnabled ? "enabled" : "disabled")}");
     }
 
     private void RestartGame()
