@@ -361,6 +361,12 @@ public class GameHUDManager : MonoBehaviour
             validCodesUsed++;
             legitimateCodesEntered++;
 
+            // Play the sound for this code's position (1st/2nd/3rd)
+            if (UISoundManager.Instance != null)
+            {
+                UISoundManager.Instance.PlayCodeEnteredSound(legitimateCodesEntered);
+            }
+
             // Update visual progress ring
             if (visualProgressRing != null)
             {
@@ -382,6 +388,12 @@ public class GameHUDManager : MonoBehaviour
             validCodesUsed++;
             legitimateCodesEntered++;
 
+            // Play the sound for this code's position (1st/2nd/3rd)
+            if (UISoundManager.Instance != null)
+            {
+                UISoundManager.Instance.PlayCodeEnteredSound(legitimateCodesEntered);
+            }
+
             // Update visual progress ring
             if (visualProgressRing != null)
             {
@@ -402,6 +414,12 @@ public class GameHUDManager : MonoBehaviour
             usedCodes.Add(locationClueCode);
             validCodesUsed++;
             legitimateCodesEntered++;
+
+            // Play the sound for this code's position (1st/2nd/3rd)
+            if (UISoundManager.Instance != null)
+            {
+                UISoundManager.Instance.PlayCodeEnteredSound(legitimateCodesEntered);
+            }
 
             // Update visual progress ring
             if (visualProgressRing != null)
@@ -445,11 +463,7 @@ public class GameHUDManager : MonoBehaviour
         // Handle partial code entry feedback
         if (validCodesUsed > 0)
         {
-            // PLAY SUCCESS SOUND - A valid code was entered
-            if (UISoundManager.Instance != null)
-            {
-                UISoundManager.Instance.PlaySuccess();
-            }
+            // Per-code sounds (1st/2nd/3rd) already played above at each code's entry point
 
             // Only show time extension if lockdown hasn't started yet
             if (lockdownManager != null && !lockdownManager.IsLockdownStarted())

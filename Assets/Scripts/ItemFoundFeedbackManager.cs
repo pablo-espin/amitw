@@ -99,6 +99,16 @@ public class ItemFoundFeedbackManager : MonoBehaviour
     // Called by clue systems when a code is discovered
     public void ShowCodeFoundSequence()
     {
+        // Play code found sound every time, regardless of the one-time HUD popup gating below
+        if (UISoundManager.Instance != null)
+        {
+            UISoundManager.Instance.PlayCodeFound();
+        }
+        else
+        {
+            Debug.LogWarning("ItemFoundFeedbackManager: UISoundManager.Instance is null, cannot play code found sound");
+        }
+
         ShowItemFoundSequence(codeFoundTextContent, true);
     }
     

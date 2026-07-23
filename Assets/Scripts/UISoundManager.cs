@@ -22,6 +22,12 @@ public class UISoundManager : MonoBehaviour
     [SerializeField] private UISoundGroup errorSounds;
     [SerializeField] private UISoundGroup successSounds;
     [SerializeField] private UISoundGroup ringCompletionSounds;
+    [SerializeField] private UISoundGroup codeFoundSounds;
+
+    [Header("Code Entry Sounds (Memory Sphere)")]
+    [SerializeField] private UISoundGroup firstCodeEnteredSound;
+    [SerializeField] private UISoundGroup secondCodeEnteredSound;
+    [SerializeField] private UISoundGroup thirdCodeEnteredSound;
 
     [Header("Settings")]
     [SerializeField] private int audioSourcePoolSize = 3;
@@ -135,6 +141,32 @@ public class UISoundManager : MonoBehaviour
     public void PlayRingComplete()
     {
         PlaySound(ringCompletionSounds);
+    }
+
+    public void PlayCodeFound()
+    {
+        PlaySound(codeFoundSounds);
+    }
+
+    // Plays the sound for the 1st, 2nd or 3rd legitimate code entered into the memory sphere's
+    // decryption panel. codeNumber is 1-based; values outside 1-3 are ignored.
+    public void PlayCodeEnteredSound(int codeNumber)
+    {
+        switch (codeNumber)
+        {
+            case 1:
+                PlaySound(firstCodeEnteredSound);
+                break;
+            case 2:
+                PlaySound(secondCodeEnteredSound);
+                break;
+            case 3:
+                PlaySound(thirdCodeEnteredSound);
+                break;
+            default:
+                Debug.LogWarning($"UISoundManager: PlayCodeEnteredSound called with unexpected codeNumber {codeNumber}");
+                break;
+        }
     }
 
     // Method to play a custom UI sound if needed

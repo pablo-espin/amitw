@@ -33,20 +33,20 @@ public class LockdownManager : MonoBehaviour
     [Header("Audio")]
     [SerializeField] private AudioSource facilityAudioSource;
     [SerializeField] private AudioClip lockdownAnnouncementClip;
-    [SerializeField] private AudioClip[] creepyAmbientSounds; // Footsteps, mechanical sounds
-    [SerializeField] private float ambientSoundInterval = 10f; // Seconds between creepy sounds
-    
-    public enum LockdownPhase 
-    { 
+    [SerializeField] private AudioClip serverEmergencyLoopClip; // loops while server racks are in Emergency/red mode during final lockdown
+
+    public enum LockdownPhase
+    {
         Normal,          // Before lockdown time
         EscapeWindow,    // 1 minute escape window
-        FinalLockdown    // Final 5 minutes with creepy sounds
+        FinalLockdown    // Final 5 minutes, server racks in Emergency mode
     }
     
     // Events
     public System.Action<LockdownPhase> OnLockdownPhaseChanged;
     public System.Action OnLockdownInitiated;
     public System.Action OnEscapeWindowClosed;
+    public System.Action<float> OnLockdownTimeExtended; // fired with the extension amount (seconds) whenever totalLockdownTime grows
     
     // State
     private LockdownPhase currentPhase = LockdownPhase.Normal;
@@ -54,7 +54,7 @@ public class LockdownManager : MonoBehaviour
     private float totalLockdownTime;
     private bool lockdownStarted = false;
     private int codesEnteredCount = 0;
-    private Coroutine ambientSoundCoroutine;
+    private AudioSource serverEmergencyAudioSource;
     private bool isPaused = false;
     private float pausedTimeRemaining;
     
@@ -93,7 +93,14 @@ public class LockdownManager : MonoBehaviour
             facilityAudioSource = gameObject.AddComponent<AudioSource>();
             facilityAudioSource.spatialBlend = 0f; // 2D sound for facility-wide announcement
         }
-        
+
+        // Dedicated looping source for the server-emergency ambience, separate from the
+        // one-shot announcement so the two never fight over facilityAudioSource
+        serverEmergencyAudioSource = gameObject.AddComponent<AudioSource>();
+        serverEmergencyAudioSource.spatialBlend = 0f; // 2D, facility-wide
+        serverEmergencyAudioSource.loop = true;
+        serverEmergencyAudioSource.playOnAwake = false;
+
         Debug.Log($"Lockdown system initialized. Lockdown at: {FormatGameTime(totalLockdownTime)}");
     }
     
@@ -171,6 +178,9 @@ public class LockdownManager : MonoBehaviour
             {
                 hudManager.OnLockdownTimeExtended(timeExtensionPerCode);
             }
+
+            // Notify any other subscribers (e.g. PreLockdownAmbienceTrigger) that the deadline moved
+            OnLockdownTimeExtended?.Invoke(timeExtensionPerCode);
         }
     }
     
@@ -423,49 +433,16 @@ public class LockdownManager : MonoBehaviour
         // Trigger server rack emergency mode
         ServerRackMaterialController.SetAllRacksEmergencyMode(true, true, 0.05f);
 
-        // Start creepy ambient sounds
-        if (creepyAmbientSounds != null && creepyAmbientSounds.Length > 0)
+        // Loop the server-emergency ambience while the racks are red, until final lockdown ends
+        if (serverEmergencyLoopClip != null && serverEmergencyAudioSource != null)
         {
-            ambientSoundCoroutine = StartCoroutine(PlayCreepyAmbientSounds());
+            serverEmergencyAudioSource.clip = serverEmergencyLoopClip;
+            serverEmergencyAudioSource.Play();
         }
 
         // Notify other systems
         OnEscapeWindowClosed?.Invoke();
         OnLockdownPhaseChanged?.Invoke(currentPhase);
-    }
-    
-    private IEnumerator PlayCreepyAmbientSounds()
-    {
-        while (currentPhase == LockdownPhase.FinalLockdown)
-        {
-            yield return new WaitForSeconds(ambientSoundInterval + Random.Range(-3f, 3f));
-            
-            if (creepyAmbientSounds.Length > 0)
-            {
-                AudioClip randomSound = creepyAmbientSounds[Random.Range(0, creepyAmbientSounds.Length)];
-                
-                // Play at random position around player for immersion
-                if (InteractionSoundManager.Instance != null)
-                {
-                    // Use 3D positioned sound for footsteps/mechanical sounds
-                    Vector3 randomPosition = GetRandomPositionAroundPlayer();
-                    // We'd need to extend InteractionSoundManager for this, or use a simpler approach
-                    facilityAudioSource.PlayOneShot(randomSound);
-                }
-            }
-        }
-    }
-    
-    private Vector3 GetRandomPositionAroundPlayer()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-        {
-            Vector3 playerPos = player.transform.position;
-            Vector2 randomCircle = Random.insideUnitCircle * 10f; // 10 meter radius
-            return new Vector3(playerPos.x + randomCircle.x, playerPos.y, playerPos.z + randomCircle.y);
-        }
-        return Vector3.zero;
     }
     
     // Dynamically adds ceiling lights/lightbulbs to the lockdown system
@@ -546,10 +523,10 @@ public class LockdownManager : MonoBehaviour
     {
         Debug.Log("Final lockdown complete - Player trapped");
 
-        // Stop ambient sounds
-        if (ambientSoundCoroutine != null)
+        // Stop the server-emergency loop
+        if (serverEmergencyAudioSource != null && serverEmergencyAudioSource.isPlaying)
         {
-            StopCoroutine(ambientSoundCoroutine);
+            serverEmergencyAudioSource.Stop();
         }
 
         // Show trapped ending
