@@ -216,7 +216,7 @@ Four producers feed it:
 |---|---|---|
 | `NarratorManager` | narrator VO | see §8 |
 | `InteractionSoundManager` | all diegetic SFX | singleton; category-per-interaction (`PlayTapToggle`, `PlayCableConnection`, `PlayKeyCardDenied`, footsteps, …); pooled sources; looping sounds tracked by ID (`water_running`, matrix); **positional looping sounds** with manual distance attenuation updated 10×/s |
-| `UISoundManager` | UI SFX | click/hover/toggle/typing/notification/error/success/ring-complete/code-found groups, plus 1st/2nd/3rd-code-entered groups (decryption panel — see §5.1); pooled |
+| `UISoundManager` | UI SFX | panel-open/click/hover/toggle/typing/notification/error/success/ring-complete/code-found groups, plus 1st/2nd/3rd-code-entered groups (decryption panel — see §5.1); pooled |
 | `UIButtonSoundHandler` / `UIAutoSoundSetup` | per-button hookup | AutoSetup bulk-adds handlers to all Buttons/Toggles/InputFields under a canvas |
 | `RoomToneManager` | ambience | base layer always; second layer fades in at 6 min, crossfades to a third at 9 min; `SetRunning(bool)` for pause |
 | `PreLockdownAmbienceTrigger` | one-shot eerie ambience before lockdown | see §5.2; independent of `RoomToneManager`'s layers, own `AudioSource` |
@@ -255,7 +255,7 @@ Things future contributors should know before "fixing" or extending:
 ## 12. How to Extend (conventions)
 
 - **New interactable object:** create a small `FooInteractable` with `GetInteractionPrompt()` + `Interact()` (copy the 0.5 s debounce pattern), put it on a collider in `interactableLayer`, and add a check in **both** `PlayerInteractionManager.CheckForInteractables()` and `TryInteract()` (mind the priority order).
-- **New UI panel:** on open — `UIStateManager.RegisterOpenUI("YourID")`, `PlayerInteractionManager.SetInteractionEnabled(false)`, `UIInputController.DisableGameplayInput()`. On close — the inverse, plus a new case in `UIStateManager.CloseUIByID` so Escape works.
+- **New UI panel:** on open — `UIStateManager.RegisterOpenUI("YourID")`, `UISoundManager.Instance.PlayPanelOpen()`, `PlayerInteractionManager.SetInteractionEnabled(false)`, `UIInputController.DisableGameplayInput()`. On close — the inverse, plus a new case in `UIStateManager.CloseUIByID` so Escape works.
 - **New narrator line:** pick a unique snake_case `dialogueID`; route one-off event lines through `GameInteractionDialogueManager` + an `InteractionDialogueTrigger` entry; use `ProximityDialogueTrigger` for spatial lines; add a `SubtitleData` asset with the same ID.
 - **New ending:** add title/description fields in `GameHUDManager`, a `ShowXOutcome()` calling `ShowEnhancedOutcomePanel`, and make sure `StatsSystem.StopStatsTracking()` semantics still hold (it's idempotent).
 - **Stats hooks:** call the existing `StatsSystem.OnXxx()` methods rather than mutating rates directly; add a new flag + handling in `UpdateCurrentStats()` for new consumption sources.

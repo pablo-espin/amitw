@@ -14,6 +14,7 @@ public class UISoundManager : MonoBehaviour
     }
 
     [Header("Sound Groups")]
+    [SerializeField] private UISoundGroup panelOpenSounds;
     [SerializeField] private UISoundGroup buttonClicks;
     [SerializeField] private UISoundGroup buttonHovers;
     [SerializeField] private UISoundGroup toggleSounds;
@@ -103,6 +104,11 @@ public class UISoundManager : MonoBehaviour
     }
 
     // Public methods for different UI sounds
+    public void PlayPanelOpen()
+    {
+        PlaySound(panelOpenSounds);
+    }
+
     public void PlayButtonClick()
     {
         PlaySound(buttonClicks);

@@ -71,18 +71,20 @@ public class LockdownManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+
+            // Set here (not in Start) because Unity guarantees all Awake calls finish
+            // before any Start call runs - PreLockdownAmbienceTrigger reads GetLockdownTime()
+            // from its own Start and needs totalLockdownTime to already be valid by then.
+            totalLockdownTime = baseLockdownTime;
         }
         else
         {
             Destroy(gameObject);
         }
     }
-    
+
     private void Start()
     {
-        // Calculate total lockdown time (base + any extensions from codes)
-        totalLockdownTime = baseLockdownTime;
-        
         // Find references
         hudManager = FindObjectOfType<GameHUDManager>();
         exitDoor = FindObjectOfType<ExitDoorController>();

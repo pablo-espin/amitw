@@ -167,6 +167,9 @@ public class PauseMenuManager : MonoBehaviour
         if (pauseMenuPanel)
             pauseMenuPanel.SetActive(true);
 
+        if (uiSoundManager != null)
+            uiSoundManager.PlayPanelOpen();
+
         // Disable player input and show cursor
         DisableGameplay();
 

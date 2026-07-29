@@ -121,21 +121,24 @@ public class ManualSystem : MonoBehaviour
         if (manualPanel != null)
         {
             manualPanel.SetActive(true);
-            
+
             // Reset to first page when opening
             currentPageIndex = 0;
             UpdatePageDisplay();
+
+            if (UISoundManager.Instance != null)
+                UISoundManager.Instance.PlayPanelOpen();
         }
-        
+
         // Disable player interaction during document view
         if (interactionManager != null)
             interactionManager.SetInteractionEnabled(false);
-        
+
         // Disable player input
         if (uiInputController != null)
             uiInputController.DisableGameplayInput();
     }
-    
+
     // Show the map page directly
     public void ShowMap()
     {
@@ -146,8 +149,8 @@ public class ManualSystem : MonoBehaviour
         if (UIStateManager.Instance != null)
         {
             UIStateManager.Instance.RegisterOpenUI("Manual");
-        }    
-            
+        }
+
         if (manualPanel != null)
         {
             manualPanel.SetActive(true);
@@ -162,6 +165,9 @@ public class ManualSystem : MonoBehaviour
             {
                 Debug.LogWarning($"Map page index {mapPageIndex} is out of range (0-{manualPages.Count-1})");
             }
+
+            if (UISoundManager.Instance != null)
+                UISoundManager.Instance.PlayPanelOpen();
         }
         
         // Disable player interaction during document view

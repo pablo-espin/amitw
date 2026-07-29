@@ -252,6 +252,11 @@ public class GameHUDManager : MonoBehaviour
                 UIStateManager.Instance.RegisterOpenUI("DecryptionPanel");
             }
 
+            if (UISoundManager.Instance != null)
+            {
+                UISoundManager.Instance.PlayPanelOpen();
+            }
+
             if (decryptionInput != null)
             {
                 decryptionInput.text = "";
@@ -628,6 +633,11 @@ public class GameHUDManager : MonoBehaviour
             if (UIStateManager.Instance != null)
             {
                 UIStateManager.Instance.RegisterOpenUI("ComputerCodeChoice");
+            }
+
+            if (UISoundManager.Instance != null)
+            {
+                UISoundManager.Instance.PlayPanelOpen();
             }
 
             if (computerCodeChoiceText != null)

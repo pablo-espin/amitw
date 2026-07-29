@@ -75,11 +75,16 @@ public class LocationClueSystem : MonoBehaviour
             documentImage.sprite = locationListSprite;
             documentTitleText.text = locationListTitle;
             documentViewPanel.SetActive(true);
-            
+
             // Register with UI state manager
             if (UIStateManager.Instance != null)
             {
                 UIStateManager.Instance.RegisterOpenUI("LocationDocument");
+            }
+
+            if (UISoundManager.Instance != null)
+            {
+                UISoundManager.Instance.PlayPanelOpen();
             }
 
             // Track that this document was examined
@@ -125,11 +130,16 @@ public class LocationClueSystem : MonoBehaviour
             documentImage.sprite = transportCardSprite;
             documentTitleText.text = transportCardTitle;
             documentViewPanel.SetActive(true);
-            
+
             // Register with UI state manager
             if (UIStateManager.Instance != null)
             {
                 UIStateManager.Instance.RegisterOpenUI("LocationDocument");
+            }
+
+            if (UISoundManager.Instance != null)
+            {
+                UISoundManager.Instance.PlayPanelOpen();
             }
 
             // Track that this document was examined

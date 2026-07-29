@@ -107,6 +107,11 @@ public class FalseClueSystem : MonoBehaviour
                 UIStateManager.Instance.RegisterOpenUI("ComputerScreen");
             }
 
+            if (UISoundManager.Instance != null)
+            {
+                UISoundManager.Instance.PlayPanelOpen();
+            }
+
             // By default, show cat video tab
             SwitchTab(false);
             
