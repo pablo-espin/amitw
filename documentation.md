@@ -82,7 +82,6 @@ Several systems keep **their own independent timers** — they are not synchroni
 | `LockdownManager` | `lockdownTimer` (counts up, pausable via `PauseTimer/ResumeTimer`) | lockdown at 900 s (15 min) + extensions; escape window 60 s; final phase 540 s |
 | `StatsSystem` | `Time.time - gameStartTime` | power levels at 360 s / 660 s / 840 s |
 | `GameNarratorController` | `gameTimer` | intro 2 s, mid-game 300 s, final warning 480 s |
-| `RoomToneManager` | `gameTimer` | ambience stage 2 at 360 s, stage 3 at 540 s |
 | `PostCaptchaDialogueTrigger` | `Time.time - captchaSolvedTime` | dialogues 5/15/30/60 s after CAPTCHA |
 
 **Displayed game clock:** `LockdownManager.FormatGameTime()` converts real time to an in-game clock where **15 real minutes = 1 in-game hour**, starting at **5:00 PM**. Base lockdown therefore hits at 6:00 PM on the HUD. `GameHUDManager` displays it, tinting yellow in the last 5 real minutes and red in the last 2.
@@ -218,7 +217,7 @@ Four producers feed it:
 | `InteractionSoundManager` | all diegetic SFX | singleton; category-per-interaction (`PlayTapToggle`, `PlayCableConnection`, `PlayKeyCardDenied`, footsteps, …); pooled sources; looping sounds tracked by ID (`water_running`, matrix); **positional looping sounds** with manual distance attenuation updated 10×/s |
 | `UISoundManager` | UI SFX | panel-open/click/hover/toggle/typing/notification/error/success/ring-complete/code-found groups, plus 1st/2nd/3rd-code-entered groups (decryption panel — see §5.1); pooled |
 | `UIButtonSoundHandler` / `UIAutoSoundSetup` | per-button hookup | AutoSetup bulk-adds handlers to all Buttons/Toggles/InputFields under a canvas |
-| `RoomToneManager` | ambience | base layer always; second layer fades in at 6 min, crossfades to a third at 9 min; `SetRunning(bool)` for pause |
+| `RoomToneManager` | ambience | base layer always on; secondary layer volume tracks `StatsSystem.OnStatsUpdated` power draw, mapped onto `PowerGaugeUI`'s percentage scale (0 at `basePowerPercentage`, full `secondaryLayerVolume` at `volumeMaxAtGaugePercentage`, default 35%→110%); `SetRunning(bool)` for pause |
 | `PreLockdownAmbienceTrigger` | one-shot eerie ambience before lockdown | see §5.2; independent of `RoomToneManager`'s layers, own `AudioSource` |
 | `LockdownManager` | lockdown announcement + server-emergency loop | see §5.2; `facilityAudioSource` (one-shot announcement, `InitiateLockdown`) + `serverEmergencyAudioSource` (looping `serverEmergencyLoopClip`, `StartFinalLockdown` → stopped in `EndGame`) |
 | `FootstepController` | on PlayerCapsule | walk/run step intervals → InteractionSoundManager |
