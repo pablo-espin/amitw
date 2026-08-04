@@ -33,6 +33,10 @@ public class ElectricityClueSystem : MonoBehaviour
     [Header("Server Rack Integration")]
     [SerializeField] private ServerRackMaterialController[] serversToActivate; // Specific servers to power on
     [SerializeField] private bool useServerRackSystem = true; // Toggle server rack integration
+
+    // Exposes the servers this system drives so other systems (e.g. ServerEmergencyDriftController)
+    // can avoid touching state on racks that are already being managed around the electricity clue.
+    public ServerRackMaterialController[] ServersToActivate => serversToActivate;
     [SerializeField] private bool debugServerSystem = true; // Debug server system
     [SerializeField] private float serverActivationDelay = 0.1f; // Delay between server activations
     

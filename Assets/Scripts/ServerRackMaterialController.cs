@@ -293,6 +293,12 @@ public class ServerRackMaterialController : MonoBehaviour
     {
         return allControllers.Count;
     }
+
+    // Snapshot of all registered controllers (safe to iterate/modify by the caller)
+    public static List<ServerRackMaterialController> GetAllControllers()
+    {
+        return new List<ServerRackMaterialController>(allControllers);
+    }
     
     // Debug method to log all states
     public static void DebugLogAllStates()

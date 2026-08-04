@@ -163,6 +163,8 @@ Water and CO₂ rates scale linearly with the current power ratio. Totals are in
 
 HUD consumers: `PowerGaugeUI` (needle gauge, base power = 35 % deflection, red pulsating background in danger zone) and `MemoryHealthBar` (green→yellow→red slider, pulsing "critical" warning below 25 %).
 
+**Environment consumer:** `ServerEmergencyDriftController` also listens to `OnMemoryHealthUpdated` and, as health falls, randomly flips a capped fraction (default 35 %) of running server racks (`ServerRackMaterialController`, Normal state) to Emergency (red) — a slow pre-lockdown visual decay to go with `RoomToneManager`'s volume ramp (§10). Racks in `ElectricityClueSystem.ServersToActivate` are excluded (that system drives their state around the clue). It stops promoting racks on `OnLockdownInitiated` (start of the 60 s escape window) — well before `StartFinalLockdown`'s full-cascade `SetAllRacksEmergencyMode` (§5.2) — so the escape window stays visually frozen at whatever fraction was reached and the final all-racks-red cascade still lands as a surprise.
+
 ---
 
 ## 7. Clue Systems in Detail
